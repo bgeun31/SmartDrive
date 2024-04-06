@@ -8,3 +8,7 @@ app.listen(8080, function(){
 app.get('/', function(요청, 응답){
     응답.sendfile(__dirname + '/index.html');
 });
+
+app.get('/map', function(요청, 응답){
+    응답.sendfile(__dirname + '/map.html');
+});
