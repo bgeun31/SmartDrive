@@ -10,8 +10,10 @@ app.use(express.static(path.join(__dirname)));
 
 // '/api/keys' 경로에 대한 GET 요청을 처리합니다.
 app.get('/api/keys', (req, res) => {
-  res.json({ apiKeyMap: process.env.OPENAPI_KEY_MAP,
-     apiKeyRealTimeTraffic: process.env.OPENAPI_KEY_REALTIMETRAFFIC });
+  res.json({ 
+    apiKeyMap: process.env.OPENAPI_KEY_MAP, 
+    apiKeyRealTimeTraffic: process.env.OPENAPI_KEY_REALTIMETRAFFIC 
+  });
 });
 
 // '/' 경로에 대한 GET 요청을 처리합니다.
