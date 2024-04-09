@@ -1,0 +1,58 @@
+[초기 설정]
+1. visual studio code 설치
+https://code.visualstudio.com/
+
+2. node.js 설치
+https://nodejs.org/en
+
+-설치 확인 방법-
+-> cmd 창에 node 명령어 입력하고 
+Welcome to Node.js v20.12.0.
+Type ".help" for more information.
+가 뜬다면 정상적으로 설치가 완료 됨.
+
+3. 브런치(내 작업 환경) 만들기
+-visual studio code 열고 상단 메뉴바에 [Terminal] -> [New Terminal]
+-터미널 창에 아래 명령어를 순서대로 입력
+git clone [프로젝트 주소] [새 폴더 이름]
+git checkout -b [내 작업 환경 이름]
+
+4. package 설치
+-터미널 창에 아래 명령어 입력
+npm install node
+npm install express
+npm install nodemon
+npm install jquery
+npm install dotenv
+
+5. 서버 열기
+-터미널 창에 아래 명령어 입력
+node server.js
+
+or
+
+nodemon server.js
+
+두 명령어 차이점은 위에는 파일 내용을 수정하면 반영이 안되고
+아래 명령어는 파일 내용을 수정하고 저장하면 즉시 서버가 수정된 내용으로 재생성됨.
+
+- 서버 활성화 확인 방법
+-> 인터넷에 localhost:8080으로 접속. 
+
+ㅡㅡㅡㅡㅡㅡㅡㅡ참고 자료ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+- nodemon을 입력했는데 빨간 글씨가 뜨는 오류 해결법 - 
+-> 방화벽이 걸려있어서 풀어줘야 함.
+
+관리자권한으로 winodws PowerShell 실행 (왼쪽 찾기에서 찾으면 됨.)
+1. executionpolicy 입력
+2. set-executionpolicy unrestricted 입력 후 y 입력
+
+- 웹 디자인 참고자료 -
+Vs code 터미널에 npm i bootstrap@5.3.3 입력 후 설치
+
+1. Bootstrap 가이드 동영상 
+https://www.youtube.com/watch?v=rVNsEXZPEF8&list=PLfLgtT94nNq1qmsvIii_CAxFlD7tvB5NE&index=8
+
+2. Bootstrap 사이트 주소
+https://getbootstrap.com/
+
