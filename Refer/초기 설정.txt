@@ -2,7 +2,7 @@
 1. visual studio code 설치
 https://code.visualstudio.com/
 
-2. node.js 설치
+2. node.js 설치d
 https://nodejs.org/en
 
 -설치 확인 방법-
