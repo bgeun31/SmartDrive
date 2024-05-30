@@ -11,7 +11,7 @@ const app = express();
 
 // 세션 설정
 app.use(session({
-  secret: 'your_secret_key',
+  secret: 'd3MHfBcvbO',
   resave: false,
   saveUninitialized: true
 }));
