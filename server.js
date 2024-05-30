@@ -17,6 +17,9 @@ app.get('/map', function(req, res) {
   res.sendFile(__dirname + '/map.html');
 });
 
+app.get('/login', function(req, res) {
+  res.sendFile(__dirname + '/login.html');
+});
 
 // 서버를 8080 포트에서 시작합니다.
 app.listen(8080, function() {
