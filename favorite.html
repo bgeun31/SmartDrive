@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Favorites - Smart Drive</title>
     <style>
         body {
@@ -77,18 +77,10 @@
         }
     </style>
     <script>
-        // Prepopulate the favorites list with one item for testing
+        // Retrieve favorites from localStorage
         let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-        if (favorites.length === 0) {
-            favorites.push({
-                id: 'flower1',
-                title: '꽃나들이 1',
-                description: '바다를 보며 달릴 수 있는 아름다운 해안도로. 시원한 바람과 함께 기분 좋은 드라이브를 즐겨보세요.',
-                imageUrl: 'https://via.placeholder.com/150'
-            });
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-        }
 
+        // Function to remove a favorite
         function toggleFavorite(driveId) {
             const index = favorites.findIndex(favorite => favorite.id === driveId);
             if (index !== -1) {
@@ -98,6 +90,7 @@
             }
         }
 
+        // Function to render favorites on the page
         function renderFavorites() {
             const favoriteList = document.getElementById('favoriteList');
             favoriteList.innerHTML = '';
@@ -121,6 +114,7 @@
             }
         }
 
+        // Call renderFavorites function when the DOM content is loaded
         document.addEventListener('DOMContentLoaded', renderFavorites);
     </script>
 </head>
