@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<<<<<<< HEAD
     <meta charset="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <title>Smart Drive</title>
@@ -10,6 +11,205 @@
             margin: 0;
             padding: 0;
             background-color: #f0f0f0;
+=======
+  <title>SmartDrive</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Smart Drive</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+
+    header {
+      background-image: url('image/drive-background.jpg');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 2rem 1rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .header-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+
+    .more-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 20px;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 10px 20px;
+      text-decoration: none;
+      color: #333;
+      transition: background-color 0.3s;
+    }
+
+    .dropdown-menu a:hover {
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .category-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin: 1rem;
+      display: inline-block;
+    }
+
+    .category-button img {
+      width: 200px;
+      height: 150px;
+      border-radius: 8px;
+      transition: transform 0.3s;
+      display: block;
+    }
+
+    .category-button img:hover {
+      transform: scale(1.05);
+    }
+
+    .category-button span {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .category-content {
+      display: none;
+      margin-top: 1rem;
+      text-align: left;
+    }
+
+    .drive-recommendation {
+      background-color: white;
+      margin: 1rem 0;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      transition: transform 0.3s;
+    }
+
+    .drive-recommendation:hover {
+      transform: scale(1.02);
+    }
+
+    .drive-recommendation img {
+      width: 150px;
+      height: 100px;
+      margin-right: 1rem;
+      border-radius: 8px;
+    }
+
+    .drive-recommendation h3 {
+      margin-top: 0;
+    }
+
+    .drive-recommendation p {
+      margin: 0.5rem 0;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      color: #333;
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+
+    .login-container {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .naver-login-button {
+      background-color: #1ec800;
+      color: white;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 4px;
+      display: inline-block;
+      font-size: 1.2rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: #4CAF50;
+      color: white;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+  <script>
+    function toggleCategoryContent(categoryId) {
+      var contents = document.querySelectorAll('.category-content');
+      contents.forEach(function (content) {
+        content.style.display = 'none';
+      });
+      document.getElementById(categoryId).style.display = 'block';
+    }
+
+    function toggleDropdownMenu() {
+      var dropdownMenu = document.getElementById('dropdownMenu');
+      if (dropdownMenu.style.display === 'block') {
+        dropdownMenu.style.display = 'none';
+      } else {
+        dropdownMenu.style.display = 'block';
+      }
+    }
+
+    window.onclick = function (event) {
+      if (!event.target.matches('.more-icon')) {
+        var dropdownMenu = document.getElementById('dropdownMenu');
+        if (dropdownMenu.style.display === 'block') {
+          dropdownMenu.style.display = 'none';
+>>>>>>> bc3f9439de797a9c40814d893e57f73a24c8f7b9
         }
         header {
             background-image: url('image/drive-background.jpg');

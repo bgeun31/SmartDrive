@@ -1,0 +1,9 @@
+diff a/index.html b/index.html	(rejected hunks)
+@@ -1,7 +1,6 @@
+ <!DOCTYPE html>
+ <html lang="ko">
+ <head>
+-<<<<<<< HEAD
+     <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+     <meta charset="UTF-8">
+     <title>Smart Drive</title>
