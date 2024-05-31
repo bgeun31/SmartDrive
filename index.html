@@ -6,7 +6,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="viewport" content="width=device-width, initial-scale=1.0">
-  <meta charset="UTF-8">
   <title>Smart Drive</title>
   <style>
     body {
@@ -166,6 +165,23 @@
       font-size: 1.2rem;
     }
 
+    .favorite-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #4CAF50;
+      font-size: 1rem;
+      margin-left: auto;
+    }
+
+    .nav-link {
+      color: white;
+      margin: 0 1rem;
+      text-decoration: none;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
     footer {
       text-align: center;
       padding: 1rem;
@@ -177,6 +193,8 @@
     }
   </style>
   <script>
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
     function toggleCategoryContent(categoryId) {
       var contents = document.querySelectorAll('.category-content');
       contents.forEach(function (content) {
@@ -202,6 +220,34 @@
         }
       }
     }
+    function toggleFavorite(driveId, title, description, imageUrl) {
+      const index = favorites.findIndex(favorite => favorite.id === driveId);
+      if (index === -1) {
+        favorites.push({ id: driveId, title, description, imageUrl });
+      } else {
+        favorites.splice(index, 1);
+      }
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+
+    function renderFavorites() {
+      const favoriteList = document.getElementById('favoriteList');
+      favoriteList.innerHTML = '';
+      favorites.forEach(favorite => {
+        const item = document.createElement('div');
+        item.className = 'drive-recommendation';
+        item.innerHTML = `
+            <img src="${favorite.imageUrl}" alt="${favorite.title}">
+            <div>
+                <h3>${favorite.title}</h3>
+                <p>${favorite.description}</p>
+                <button class="favorite-button" onclick="toggleFavorite('${favorite.id}', '${favorite.title}', '${favorite.description}', '${favorite.imageUrl}')">즐겨찾기 해제</button>
+            </div>
+        `;
+        favoriteList.appendChild(item);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', renderFavorites);
   </script>
 
   <!-- Bootstrap CSS -->
@@ -226,6 +272,7 @@
     </div>
     <img src="image/more.png" alt="More" class="more-icon" onclick="toggleDropdownMenu()">
     <div id="dropdownMenu" class="dropdown-menu">
+      <a href="favorites.html">Favorites</a>
       <a href="#">Profile</a>
       <a href="#">Settings</a>
       <a href="/logout">Logout</a>
@@ -244,6 +291,9 @@
         <div>
           <h3>꽃나들이 1</h3>
           <p>바다를 보며 달릴 수 있는 아름다운 해안도로. 시원한 바람과 함께 기분 좋은 드라이브를 즐겨보세요.</p>
+          <button class="favorite-button"
+            onclick="toggleFavorite('flower1', '꽃나들이 1', '바다를 보며 달릴 수 있는 아름다운 해안도로. 시원한 바람과 함께 기분 좋은 드라이브를 즐겨보세요.', 'https://via.placeholder.com/150')">즐겨찾기
+            추가</button>
         </div>
       </div>
       <div class="drive-recommendation">
@@ -251,6 +301,9 @@
         <div>
           <h3>꽃나들이 2</h3>
           <p>해안선을 따라 이어지는 길에서 꽃을 감상하며 드라이브를 즐기세요.</p>
+          <button class="favorite-button"
+            onclick="toggleFavorite('flower2', '꽃나들이 2', '해안선을 따라 이어지는 길에서 꽃을 감상하며 드라이브를 즐기세요.', 'https://via.placeholder.com/150')">즐겨찾기
+            추가</button>
         </div>
       </div>
       <div class="drive-recommendation">
@@ -258,12 +311,16 @@
         <div>
           <h3>꽃나들이 3</h3>
           <p>끝없이 펼쳐진 바다와 꽃들이 어우러진 경관을 감상할 수 있습니다.</p>
+          <button class="favorite-button"
+            onclick="toggleFavorite('flower3', '꽃나들이 3', '끝없이 펼쳐진 바다와 꽃들이 어우러진 경관을 감상할 수 있습니다.', 'https://via.placeholder.com/150')">즐겨찾기
+            추가</button>
         </div>
       </div>
     </div>
   </div>
   <footer>
     &copy; 2024 Smart Drive. All rights reserved.
+    <a href="favorites.html" class="nav-link">즐겨찾기</a>
   </footer>
 
   <!-- Bootstrap Bundle JS -->
@@ -286,5 +343,4 @@
     });
   </script>
 </body>
-
 </html>
