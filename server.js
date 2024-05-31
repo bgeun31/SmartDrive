@@ -82,6 +82,10 @@ app.get('/login', function(req, res) {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+app.get('/favorite', function(req, res) {
+  res.sendFile(path.join(__dirname, 'favorite.html'));
+});
+
 // 서버 시작
 app.listen(8080, function() {
   console.log('Server is listening on port 8080');
