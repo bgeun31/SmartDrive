@@ -191,6 +191,23 @@
                 }
             }
         }
+
+        // Check if the user is authenticated
+        window.addEventListener('DOMContentLoaded', function () {
+            fetch('/isAuthenticated')
+                .then(response => response.json())
+                .then(data => {
+                    const loginLink = document.getElementById('login-link');
+                    const logoutLink = document.getElementById('logout-link');
+                    if (data.isAuthenticated) {
+                        loginLink.style.display = 'none';
+                        logoutLink.style.display = 'block';
+                    } else {
+                        loginLink.style.display = 'block';
+                        logoutLink.style.display = 'none';
+                    }
+                });
+        });
     </script>
 </head>
 
@@ -200,17 +217,14 @@
         <div class="header-content">
             <h1>Smart Drive</h1>
             <p>어디로든 떠나고 싶은 드라이브 코스</p>
-            <div class="login-container">
-                <a href="/auth/naver" class="naver-login-button">네이버로 로그인</a>
-                <a href="/logout" class="naver-login-button" id="logout-button" style="display: none;">로그아웃</a>
-            </div>
         </div>
         <img src="image/more.png" alt="More" class="more-icon" onclick="toggleDropdownMenu()">
         <div id="dropdownMenu" class="dropdown-menu">
             <a href="favorite.html">즐겨찾기</a>
             <a href="#">프로필</a>
             <a href="#">설정</a>
-            <a href="#">로그아웃</a>
+            <a href="/auth/naver" id="login-link">로그인</a>
+            <a href="/logout" id="logout-link" style="display: none;">로그아웃</a>
         </div>
     </header>
     <div class="container">
@@ -254,19 +268,5 @@
         &copy; 2024 Smart Drive. All rights reserved.
         <a href="favorite.html" class="nav-link">즐겨찾기</a>
     </footer>
-    <script>
-        // Check if the user is authenticated
-        $(document).ready(function () {
-            $.get('/isAuthenticated', function (data) {
-                if (data.isAuthenticated) {
-                    $('#logout-button').show();
-                    $('.naver-login-button').hide();
-                } else {
-                    $('#logout-button').hide();
-                    $('.naver-login-button').show();
-                }
-            });
-        });
-    </script>
 </body>
 </html>
