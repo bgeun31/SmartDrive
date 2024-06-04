@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
     <title>Smart Drive</title>
     <style>
@@ -67,6 +67,17 @@
             padding: 2rem;
             text-align: center;
         }
+        .title {
+            font-size: 1.5rem;
+            color: #333;
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+        .category-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
         .category-button {
             background: none;
             border: none;
@@ -76,8 +87,8 @@
             display: inline-block;
         }
         .category-button img {
-            width: 200px;
-            height: 150px;
+            width: 100%;
+            height: auto;
             border-radius: 8px;
             transition: transform 0.3s;
             display: block;
@@ -91,49 +102,22 @@
             font-size: 1rem;
             color: #333;
         }
-        .category-content {
-            display: none;
-            margin-top: 1rem;
+        .drive-companion {
+            margin: 2rem 0;
             text-align: left;
         }
-        .drive-recommendation {
+        .companion-post {
             background-color: white;
             margin: 1rem 0;
             padding: 1rem;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            transition: transform 0.3s;
         }
-        .drive-recommendation:hover {
-            transform: scale(1.02);
-        }
-        .drive-recommendation img {
-            width: 150px;
-            height: 100px;
-            margin-right: 1rem;
-            border-radius: 8px;
-        }
-        .drive-recommendation h3 {
+        .companion-post h3 {
             margin-top: 0;
         }
-        .drive-recommendation p {
+        .companion-post p {
             margin: 0.5rem 0;
-        }
-        .title {
-            font-size: 1.5rem;
-            color: #333;
-            text-align: left;
-            margin-bottom: 1rem;
-        }
-        .favorite-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #4CAF50;
-            font-size: 1rem;
-            margin-left: auto;
         }
         footer {
             text-align: center;
@@ -153,16 +137,6 @@
         }
     </style>
     <script>
-        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-
-        function toggleCategoryContent(categoryId) {
-            var contents = document.querySelectorAll('.category-content');
-            contents.forEach(function(content) {
-                content.style.display = 'none';
-            });
-            document.getElementById(categoryId).style.display = 'block';
-        }
-
         function toggleDropdownMenu() {
             var dropdownMenu = document.getElementById('dropdownMenu');
             if (dropdownMenu.style.display === 'block') {
@@ -180,36 +154,6 @@
                 }
             }
         }
-
-        function toggleFavorite(driveId, title, description, imageUrl) {
-            const index = favorites.findIndex(favorite => favorite.id === driveId);
-            if (index === -1) {
-                favorites.push({ id: driveId, title, description, imageUrl });
-            } else {
-                favorites.splice(index, 1);
-            }
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-        }
-
-        function renderFavorites() {
-            const favoriteList = document.getElementById('favoriteList');
-            favoriteList.innerHTML = '';
-            favorites.forEach(favorite => {
-                const item = document.createElement('div');
-                item.className = 'drive-recommendation';
-                item.innerHTML = `
-                    <img src="${favorite.imageUrl}" alt="${favorite.title}">
-                    <div>
-                        <h3>${favorite.title}</h3>
-                        <p>${favorite.description}</p>
-                        <button class="favorite-button" onclick="toggleFavorite('${favorite.id}', '${favorite.title}', '${favorite.description}', '${favorite.imageUrl}')">즐겨찾기 해제</button>
-                    </div>
-                `;
-                favoriteList.appendChild(item);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', renderFavorites);
     </script>
 </head>
 <body>
@@ -221,49 +165,52 @@
         </div>
         <img src="image/more.png" alt="More" class="more-icon" onclick="toggleDropdownMenu()">
         <div id="dropdownMenu" class="dropdown-menu">
-            <a href="favorites.html">Favorites</a>
-            <a href="#">Profile</a>
-            <a href="#">Settings</a>
-            <a href="#">Logout</a>
+            <a href="favorite.html">즐겨찾기</a>
+            <a href="#">프로필</a>
+            <a href="#">설정</a>
+            <a href="#">로그아웃</a>
         </div>
     </header>
     <div class="container">
         <div class="title">드라이브 코스 테마 선택</div>
-        <button class="category-button" onclick="toggleCategoryContent('flowerCategory1')">
-            <img src="image/꽃나들이1.jpeg" alt="꽃나들이 1">
-            <span>꽃나들이</span>
-        </button>
-        
-        <div id="flowerCategory1" class="category-content">
-            <div class="drive-recommendation">
-                <img src="https://via.placeholder.com/150" alt="꽃나들이 1">
-                <div>
-                    <h3>꽃나들이 1</h3>
-                    <p>바다를 보며 달릴 수 있는 아름다운 해안도로. 시원한 바람과 함께 기분 좋은 드라이브를 즐겨보세요.</p>
-                    <button class="favorite-button" onclick="toggleFavorite('flower1', '꽃나들이 1', '바다를 보며 달릴 수 있는 아름다운 해안도로. 시원한 바람과 함께 기분 좋은 드라이브를 즐겨보세요.', 'https://via.placeholder.com/150')">즐겨찾기 추가</button>
-                </div>
+        <div class="category-container">
+            <button class="category-button" onclick="location.href='flower.html'">
+                <img src="image/꽃나들이1.jpeg" alt="꽃나들이">
+                <span>꽃나들이</span>
+            </button>
+            <button class="category-button" onclick="location.href='park.html'">
+                <img src="image/공원.jpeg" alt="공원 드라이브">
+                <span>공원 드라이브</span>
+            </button>
+            <button class="category-button" onclick="location.href='lake.html'">
+                <img src="image/호수.jpeg" alt="호수 드라이브">
+                <span>호수 드라이브</span>
+            </button>
+            <button class="category-button" onclick="location.href='night.html'">
+                <img src="image/야경.jpeg" alt="야경 드라이브">
+                <span>야경 드라이브</span>
+            </button>
+        </div>
+
+        <div class="drive-companion">
+            <div class="title">드라이브 동행</div>
+            <div class="companion-post">
+                <h3>남성 30대</h3>
+                <p>서울에서 출발해서 강릉까지 드라이브 하실 분 구합니다.</p>
             </div>
-            <div class="drive-recommendation">
-                <img src="https://via.placeholder.com/150" alt="꽃나들이 2">
-                <div>
-                    <h3>꽃나들이 2</h3>
-                    <p>해안선을 따라 이어지는 길에서 꽃을 감상하며 드라이브를 즐기세요.</p>
-                    <button class="favorite-button" onclick="toggleFavorite('flower2', '꽃나들이 2', '해안선을 따라 이어지는 길에서 꽃을 감상하며 드라이브를 즐기세요.', 'https://via.placeholder.com/150')">즐겨찾기 추가</button>
-                </div>
+            <div class="companion-post">
+                <h3>여성 20대</h3>
+                <p>주말에 부산 해안도로 드라이브 함께 하실 분 찾아요!</p>
             </div>
-            <div class="drive-recommendation">
-                <img src="https://via.placeholder.com/150" alt="꽃나들이 3">
-                <div>
-                    <h3>꽃나들이 3</h3>
-                    <p>끝없이 펼쳐진 바다와 꽃들이 어우러진 경관을 감상할 수 있습니다.</p>
-                    <button class="favorite-button" onclick="toggleFavorite('flower3', '꽃나들이 3', '끝없이 펼쳐진 바다와 꽃들이 어우러진 경관을 감상할 수 있습니다.', 'https://via.placeholder.com/150')">즐겨찾기 추가</button>
-                </div>
+            <div class="companion-post">
+                <h3>남성 20대</h3>
+                <p>춘천에서 남이섬까지 드라이브 동행 구해요.</p>
             </div>
         </div>
     </div>
     <footer>
         &copy; 2024 Smart Drive. All rights reserved.
-        <a href="favorites.html" class="nav-link">즐겨찾기</a>
+        <a href="favorite.html" class="nav-link">즐겨찾기</a>
     </footer>
 </body>
 </html>
