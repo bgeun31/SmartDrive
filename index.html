@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
@@ -11,6 +12,7 @@
             padding: 0;
             background-color: #f0f0f0;
         }
+
         header {
             background-image: url('image/drive-background.jpg');
             background-size: cover;
@@ -20,10 +22,12 @@
             text-align: center;
             position: relative;
         }
+
         .header-content {
             position: relative;
             z-index: 2;
         }
+
         .header-overlay {
             position: absolute;
             top: 0;
@@ -33,6 +37,7 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 1;
         }
+
         .more-icon {
             position: absolute;
             top: 20px;
@@ -42,6 +47,7 @@
             cursor: pointer;
             z-index: 2;
         }
+
         .dropdown-menu {
             display: none;
             position: absolute;
@@ -53,6 +59,7 @@
             overflow: hidden;
             z-index: 2;
         }
+
         .dropdown-menu a {
             display: block;
             padding: 10px 20px;
@@ -60,24 +67,38 @@
             color: #333;
             transition: background-color 0.3s;
         }
+
         .dropdown-menu a:hover {
             background-color: #f0f0f0;
         }
+
         .container {
             padding: 2rem;
             text-align: center;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         .title {
             font-size: 1.5rem;
             color: #333;
             text-align: left;
             margin-bottom: 1rem;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         .category-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         .category-button {
             background: none;
             border: none;
@@ -86,6 +107,7 @@
             margin: 1rem;
             display: inline-block;
         }
+
         .category-button img {
             width: 100%;
             height: auto;
@@ -93,19 +115,29 @@
             transition: transform 0.3s;
             display: block;
         }
+
         .category-button img:hover {
             transform: scale(1.05);
         }
+
         .category-button span {
             display: block;
             margin-top: 0.5rem;
             font-size: 1rem;
             color: #333;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         .drive-companion {
             margin: 2rem 0;
             text-align: left;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         .companion-post {
             background-color: white;
             margin: 1rem 0;
@@ -113,12 +145,39 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+<<<<<<< HEAD
         .companion-post h3 {
             margin-top: 0;
         }
         .companion-post p {
             margin: 0.5rem 0;
         }
+=======
+
+        .companion-post h3 {
+            margin-top: 0;
+        }
+
+        .companion-post p {
+            margin: 0.5rem 0;
+        }
+
+        .login-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .naver-login-button {
+            background-color: #1ec800;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 1.2rem;
+        }
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         footer {
             text-align: center;
             padding: 1rem;
@@ -128,6 +187,7 @@
             bottom: 0;
             width: 100%;
         }
+
         .nav-link {
             color: white;
             margin: 0 1rem;
@@ -137,6 +197,10 @@
         }
     </style>
     <script>
+<<<<<<< HEAD
+=======
+
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         function toggleDropdownMenu() {
             var dropdownMenu = document.getElementById('dropdownMenu');
             if (dropdownMenu.style.display === 'block') {
@@ -146,7 +210,7 @@
             }
         }
 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             if (!event.target.matches('.more-icon')) {
                 var dropdownMenu = document.getElementById('dropdownMenu');
                 if (dropdownMenu.style.display === 'block') {
@@ -154,8 +218,29 @@
                 }
             }
         }
+<<<<<<< HEAD
+=======
+
+        // Check if the user is authenticated
+        window.addEventListener('DOMContentLoaded', function () {
+            fetch('/isAuthenticated')
+                .then(response => response.json())
+                .then(data => {
+                    const loginLink = document.getElementById('login-link');
+                    const logoutLink = document.getElementById('logout-link');
+                    if (data.isAuthenticated) {
+                        loginLink.style.display = 'none';
+                        logoutLink.style.display = 'block';
+                    } else {
+                        loginLink.style.display = 'block';
+                        logoutLink.style.display = 'none';
+                    }
+                });
+        });
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
     </script>
 </head>
+
 <body>
     <header>
         <div class="header-overlay"></div>
@@ -168,7 +253,12 @@
             <a href="favorite.html">즐겨찾기</a>
             <a href="#">프로필</a>
             <a href="#">설정</a>
+<<<<<<< HEAD
             <a href="#">로그아웃</a>
+=======
+            <a href="/auth/naver" id="login-link">로그인</a>
+            <a href="/logout" id="logout-link" style="display: none;">로그아웃</a>
+>>>>>>> e19d7c0b85000508b0acd16cf7d44f0c772c2b75
         </div>
     </header>
     <div class="container">

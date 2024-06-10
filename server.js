@@ -53,6 +53,8 @@ app.get('/auth/naver/callback',
   passport.authenticate('naver', { failureRedirect: '/' }),
   function(req, res) {
     // 성공 시 리디렉션할 경로
+    // 사용자의 즐겨찾기 정보를 세션에 저장
+    req.session.favorites = req.user.favorites || [];
     res.redirect('/');
   });
 
@@ -62,6 +64,22 @@ app.get('/logout', function(req, res) {
     if (err) { return next(err); }
     res.redirect('/');
   });
+});
+
+// 인증 상태 체크 미들웨어
+function isAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
+
+// 사용자 정보 미들웨어
+app.use(function(req, res, next) {
+  res.locals.user = req.user;
+  res.locals.isAuthenticated = req.isAuthenticated();
+  res.locals.favorites = req.session.favorites || [];
+  next();
 });
 
 // 인증 상태 체크 라우트
@@ -80,6 +98,14 @@ app.get('/map', function(req, res) {
 
 app.get('/login', function(req, res) {
   res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/favorite', isAuthenticated, function(req, res) {
+  res.sendFile(path.join(__dirname, 'favorite.html'));
+});
+
+app.get('/community', isAuthenticated, function(req, res) {
+  res.sendFile(path.join(__dirname, 'community.html'));
 });
 
 // 서버 시작
