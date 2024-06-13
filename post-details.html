@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>게시글 상세보기</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .post {
+            background-color: white;
+            padding: 2rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .post h2 {
+            margin-top: 0;
+        }
+        .like-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .like-button img {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 5px;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const postId = urlParams.get('id');
+            console.log('Post ID:', postId); // 디버깅을 위해 추가
+            loadPostDetails(postId);
+        });
+
+        function loadPostDetails(postId) {
+            fetch(`/api/posts/${postId}`)
+                .then(response => response.json())
+                .then(post => {
+                    console.log('Post details:', post); // 디버깅을 위해 추가
+                    const postContainer = document.getElementById('postContainer');
+                    if (post.error) {
+                        postContainer.innerHTML = `<p>게시글을 찾을 수 없습니다.</p>`;
+                    } else {
+                        postContainer.innerHTML = `
+                            <h2>${post.title}</h2>
+                            <p><strong>작성자:</strong> ${post.author}</p>
+                            <p>${post.content}</p>
+                            ${post.image_url ? `<img src="${post.image_url}" alt="Post image" style="max-width:100%;">` : ''}
+                            <div class="like-button" onclick="likePost(${post.id})">
+                                <img src="/image/like.png" alt="Like">
+                                <span id="likeCount">${post.likes}</span>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading post details:', error);
+                    document.getElementById('postContainer').innerHTML = `<p>게시글을 불러오는 중 오류가 발생했습니다.</p>`;
+                });
+        }
+
+        function likePost(postId) {
+            fetch(`/api/posts/${postId}/like`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const likeCount = document.getElementById('likeCount');
+                    likeCount.textContent = parseInt(likeCount.textContent) + 1;
+                } else {
+                    alert('Error liking post');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while liking the post.');
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="postContainer" class="post"></div>
+    </div>
+</body>
+</html>

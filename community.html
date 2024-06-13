@@ -20,23 +20,7 @@
         .container {
             padding: 2rem;
         }
-        .post, .popular-post {
-            background-color: white;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-        .post h2, .popular-post h2 {
-            margin-top: 0;
-        }
-        .post-content, .popular-post-content {
-            display: none;
-            margin-top: 1rem;
-        }
         .post-form {
-            display: none;
             background-color: white;
             padding: 1rem;
             margin-bottom: 1rem;
@@ -62,79 +46,54 @@
         .post-form button:hover {
             background-color: #45a049;
         }
-        .show-form-button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-bottom: 1rem;
-        }
-        .show-form-button:hover {
-            background-color: #45a049;
-        }
-        .comment-section {
-            margin-top: 1rem;
-            background-color: #f9f9f9;
+        .post {
+            background-color: white;
             padding: 1rem;
-            border-radius: 8px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        }
-        .comment {
-            margin-bottom: 0.5rem;
-        }
-        .main-page-button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
             margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
-        .main-page-button:hover {
-            background-color: #45a049;
+        .post h2 {
+            margin-top: 0;
         }
         .like-button {
             position: absolute;
-            right: 20px;
-            top: 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             cursor: pointer;
         }
+        .like-button img {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 5px;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
         .tab {
-            display: inline-block;
             padding: 10px 20px;
-            margin: 0 5px;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border-radius: 4px;
+            margin: 0 5px;
         }
         .tab.active {
             background-color: #45a049;
-        }
-        footer {
-            text-align: center;
-            padding: 1rem;
-            background-color: #4CAF50;
-            color: white;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
         }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             loadPopularPosts();
             loadPosts();
-            // 기본적으로 인기 게시물이 보이도록 설정
             toggleTab('popular');
+            setAuthorField();
 
             document.getElementById('popular-tab').addEventListener('click', function() {
                 toggleTab('popular');
@@ -145,11 +104,123 @@
             });
         });
 
+        function setAuthorField() {
+            fetch('/isAuthenticated')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.isAuthenticated) {
+                        document.getElementById('authorField').value = data.user.nickname;
+                        document.getElementById('authorField').readOnly = true;
+                    } else {
+                        document.getElementById('authorField').value = '로그인 해주세요';
+                    }
+                });
+        }
+
+        function addPost(event) {
+            event.preventDefault();
+            const form = document.getElementById('postForm');
+            const formData = new FormData(form);
+            console.log('Form Data:', formData);
+
+            fetch('/api/posts', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Response:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data:', data);
+                if (data.success) {
+                    loadPopularPosts();
+                    loadPosts();
+                    form.reset();
+                    document.getElementById('imagePreview').style.display = 'none';
+                } else {
+                    alert('Error posting');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while posting.');
+            });
+        }
+
+        function loadPopularPosts() {
+            fetch('/api/popular-posts')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Popular Posts:', data);
+                    const popularPostsContainer = document.getElementById('popularPostsContainer');
+                    popularPostsContainer.innerHTML = '';
+                    data.forEach(post => {
+                        const postElement = createPostElement(post);
+                        popularPostsContainer.appendChild(postElement);
+                    });
+                });
+        }
+
+        function loadPosts() {
+            fetch('/api/posts')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Posts:', data);
+                    const postsContainer = document.getElementById('postsContainer');
+                    postsContainer.innerHTML = '';
+                    data.forEach(post => {
+                        const postElement = createPostElement(post);
+                        postsContainer.appendChild(postElement);
+                    });
+                });
+        }
+
+        function createPostElement(post) {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            postElement.innerHTML = `
+                <h2>${post.title}</h2>
+                <p><strong>작성자:</strong> ${post.author}</p>
+                <p>${post.content}</p>
+                ${post.image_url ? `<img src="${post.image_url}" alt="Post image" style="max-width:100%;">` : ''}
+                <div class="like-button" onclick="likePost(event, ${post.id})">
+                    <img src="/image/like.png" alt="Like">
+                    <span class="like-count">${post.likes}</span>
+                </div>
+            `;
+            postElement.onclick = function() {
+                window.location.href = `post-details.html?id=${post.id}`;
+            };
+            return postElement;
+        }
+
+        function likePost(event, postId) {
+            event.stopPropagation();
+            fetch(`/api/posts/${postId}/like`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Like Data:', data);
+                if (data.success) {
+                    const likeCountElement = event.currentTarget.querySelector('.like-count');
+                    likeCountElement.textContent = data.likes;
+                } else {
+                    alert('Error liking post');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while liking the post.');
+            });
+        }
+
         function toggleTab(tab) {
             var popularTab = document.getElementById('popular-tab');
             var allTab = document.getElementById('all-tab');
-            var popularPosts = document.getElementById('popular-posts');
-            var allPosts = document.getElementById('all-posts');
+            var popularPosts = document.getElementById('popularPostsContainer');
+            var allPosts = document.getElementById('postsContainer');
 
             if (tab === 'popular') {
                 popularTab.classList.add('active');
@@ -164,144 +235,14 @@
             }
         }
 
-        function loadPopularPosts() {
-            fetch('/api/popular-posts')
-                .then(response => response.json())
-                .then(data => {
-                    var popularPostsContainer = document.getElementById('popular-posts');
-                    popularPostsContainer.innerHTML = '';
-                    data.forEach(post => {
-                        var postElement = document.createElement('div');
-                        postElement.className = 'popular-post';
-                        postElement.innerHTML = '<h2>' + post.title + '</h2>';
-                        postElement.addEventListener('click', function() {
-                            togglePostContent('popularPostContent' + post.id);
-                        });
-
-                        var postContent = document.createElement('div');
-                        postContent.className = 'popular-post-content';
-                        postContent.id = 'popularPostContent' + post.id;
-                        postContent.innerHTML = '<p><strong>작성자: </strong>' + post.author + '</p><p>' + post.content + '</p><div class="comment-section"><h3>댓글</h3><form onsubmit="addComment(event, this)"><input type="text" placeholder="댓글 작성..." required><button type="submit">댓글 달기</button></form><div class="comments"></div></div>';
-
-                        var likeButton = document.createElement('button');
-                        likeButton.className = 'like-button';
-                        likeButton.innerText = '좋아요 (' + post.likes + ')';
-                        likeButton.addEventListener('click', function(event) {
-                            event.stopPropagation();
-                            likePost(post.id, likeButton);
-                        });
-
-                        postElement.appendChild(likeButton);
-                        if (post.image_url) {
-                            var img = document.createElement('img');
-                            img.src = post.image_url;
-                            img.style.maxWidth = '100%';
-                            postElement.appendChild(img);
-                        }
-                        popularPostsContainer.appendChild(postElement);
-                        popularPostsContainer.appendChild(postContent);
-                    });
-                });
-        }
-
-        function loadPosts() {
-            fetch('/api/posts')
-                .then(response => response.json())
-                .then(data => {
-                    var postsContainer = document.getElementById('all-posts');
-                    postsContainer.innerHTML = '';
-                    data.forEach(post => {
-                        var postElement = document.createElement('div');
-                        postElement.className = 'post';
-                        postElement.innerHTML = '<h2>' + post.title + '</h2>';
-                        postElement.addEventListener('click', function() {
-                            togglePostContent('postContent' + post.id);
-                        });
-
-                        var postContent = document.createElement('div');
-                        postContent.className = 'post-content';
-                        postContent.id = 'postContent' + post.id;
-                        postContent.innerHTML = '<p><strong>작성자: </strong>' + post.author + '</p><p>' + post.content + '</p><div class="comment-section"><h3>댓글</h3><form onsubmit="addComment(event, this)"><input type="text" placeholder="댓글 작성..." required><button type="submit">댓글 달기</button></form><div class="comments"></div></div>';
-
-                        var likeButton = document.createElement('button');
-                        likeButton.className = 'like-button';
-                        likeButton.innerText = '좋아요 (' + post.likes + ')';
-                        likeButton.addEventListener('click', function(event) {
-                            event.stopPropagation();
-                            likePost(post.id, likeButton);
-                        });
-
-                        postElement.appendChild(likeButton);
-                        if (post.image_url) {
-                            var img = document.createElement('img');
-                            img.src = post.image_url;
-                            img.style.maxWidth = '100%';
-                            postElement.appendChild(img);
-                        }
-                        postsContainer.appendChild(postElement);
-                        postsContainer.appendChild(postContent);
-                    });
-                });
-        }
-
-        function togglePostForm() {
-            var postForm = document.getElementById('postFormContainer');
-            if (postForm.style.display === 'block') {
-                postForm.style.display = 'none';
-            } else {
-                postForm.style.display = 'block';
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById('imagePreview');
+                output.src = reader.result;
+                output.style.display = 'block';
             }
-        }
-
-        function addPost(event) {
-            event.preventDefault();
-            
-            var formData = new FormData(document.getElementById('postForm'));
-
-            fetch('/api/posts', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadPosts();
-                    loadPopularPosts();
-                }
-            });
-        }
-
-        function togglePostContent(contentId) {
-            var contentElement = document.getElementById(contentId);
-            if (contentElement.style.display === 'block') {
-                contentElement.style.display = 'none';
-            } else {
-                contentElement.style.display = 'block';
-            }
-        }
-
-        function addComment(event, form) {
-            event.preventDefault();
-            var commentText = form.querySelector('input').value;
-            var commentSection = form.nextElementSibling;
-            var newComment = document.createElement('div');
-            newComment.className = 'comment';
-            newComment.innerText = commentText;
-            commentSection.appendChild(newComment);
-            form.reset();
-        }
-
-        function likePost(postId, likeButton) {
-            fetch('/api/posts/' + postId + '/like', {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    var currentLikes = parseInt(likeButton.innerText.match(/\d+/)[0]);
-                    likeButton.innerText = '좋아요 (' + (currentLikes + 1) + ')';
-                }
-            });
+            reader.readAsDataURL(event.target.files[0]);
         }
     </script>
 </head>
@@ -310,28 +251,22 @@
         <h1>Community</h1>
     </header>
     <div class="container">
-        <button class="show-form-button" onclick="togglePostForm()">게시글 작성</button>
-        <button class="main-page-button" onclick="window.location.href='index.html'">메인 페이지로 이동</button>
-        <div id="postFormContainer" class="post-form">
+        <div class="post-form">
             <form id="postForm" onsubmit="addPost(event)">
-                <input type="text" id="postTitle" name="title" placeholder="제목" required>
-                <input type="text" id="postAuthor" name="author" placeholder="작성자" required>
-                <textarea id="postContent" name="content" rows="4" placeholder="게시글 작성..." required></textarea>
-                <input type="file" id="postImage" name="image">
+                <input type="text" name="title" placeholder="제목" required>
+                <input type="text" id="authorField" name="author" placeholder="작성자" required>
+                <textarea name="content" rows="4" placeholder="내용" required></textarea>
+                <input type="file" name="image" accept="image/*" onchange="previewImage(event)">
+                <img id="imagePreview" style="max-width: 100%; display: none;" />
                 <button type="submit">게시</button>
             </form>
         </div>
-
         <div class="tabs">
             <div id="popular-tab" class="tab active">인기 게시물</div>
             <div id="all-tab" class="tab">모든 게시물</div>
         </div>
-
-        <div id="popular-posts"></div>
-        <div id="all-posts" style="display: none;"></div>
+        <div id="popularPostsContainer"></div>
+        <div id="postsContainer" style="display: none;"></div>
     </div>
-    <footer>
-        &copy; 2024 Smart Drive Community. All rights reserved.
-    </footer>
 </body>
 </html>
