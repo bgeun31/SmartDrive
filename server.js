@@ -7,6 +7,7 @@ const NaverStrategy = require('passport-naver').Strategy;
 const mysql = require('mysql2'); // MySQL 연동
 const multer = require('multer'); // 파일 업로드를 위한 multer 라이브러리
 const fs = require('fs');
+const axios = require('axios');
 
 dotenv.config(); // 가장 먼저 환경 변수를 로드
 
@@ -23,6 +24,7 @@ db.connect((err) => {
   console.log('MySQL Connected...');
 });
 
+// Passport 설정
 passport.use(new NaverStrategy({
   clientID: process.env.NAVER_CLIENT_ID,
   clientSecret: process.env.NAVER_CLIENT_SECRET,
@@ -171,6 +173,64 @@ app.post('/api/posts', upload.single('image'), function(req, res) {
     if (err) throw err;
     res.json({ success: true });
   });
+});
+
+// 기상청 API 호출 함수
+async function getWeatherData() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+
+  // 기상청 API는 3시간 단위로 제공되므로 가장 가까운 발표 시각을 계산합니다.
+  const baseTime = hours < 2 ? '2300' :
+                   hours < 5 ? '0200' :
+                   hours < 8 ? '0500' :
+                   hours < 11 ? '0800' :
+                   hours < 14 ? '1100' :
+                   hours < 17 ? '1400' :
+                   hours < 20 ? '1700' :
+                   hours < 23 ? '2000' : '2300';
+
+  const baseDate = year + month + day;
+
+  const params = {
+    serviceKey: process.env.SERVICE_KEY,
+    pageNo: '1',
+    numOfRows: '10',
+    dataType: 'JSON',
+    base_date: baseDate,
+    base_time: baseTime,
+    nx: '60',  // 예: 서울시 종로구 (x좌표)
+    ny: '127'  // 예: 서울시 종로구 (y좌표)
+  };
+
+  const endpoint = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
+
+  try {
+    const response = await axios.get(endpoint, { params });
+    const data = response.data;
+    if (data.response.header.resultCode === '00') {
+      return data.response.body.items.item;
+    } else {
+      throw new Error(data.response.header.resultMsg);
+    }
+  } catch (error) {
+    console.error('API 호출 중 오류 발생:', error);
+    return null;
+  }
+}
+
+// 날씨 정보 API
+app.get('/api/weather', async function(req, res) {
+  const weatherData = await getWeatherData();
+  if (weatherData) {
+    res.json(weatherData);
+  } else {
+    res.status(500).json({ error: '날씨 정보를 가져오는 데 실패했습니다.' });
+  }
 });
 
 // 서버 시작
