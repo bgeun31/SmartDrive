@@ -18,25 +18,25 @@
             transition: width 0.3s;
         }
         #sidebar {
-            width: 400px; /* 너비를 충분하게 조정 */
+            width: 300px;
             height: 100vh;
             background-color: #f4f4f4;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
             overflow-y: auto;
-            position: absolute;
-            left: -250px; /* 초기에 사이드바 숨기기 */
-            transition: left 0.3s;
-            left: 0;
+            position: fixed;
+            right: -300px;
+            transition: right 0.3s;
+            z-index: 1000;
         }
         
         #sidebar.open {
-            left: 0;
+            right: 0;
         }
         #toggle-button {
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 1000;
+            z-index: 1001;
             background: #007bff;
             color: #fff;
             border: none;
@@ -51,17 +51,19 @@
         }
         .sidebar-content {
             padding: 15px;
+            text-align: right;
         }
         .course-button {
             display: block;
-            width: 100%;
+            width: calc(100% - 30px);
             padding: 10px;
-            margin: 5px 0;
+            margin: 5px auto;
             background: #007bff;
             color: #fff;
             text-align: center;
             text-decoration: none;
             cursor: pointer;
+            border-radius: 5px;
         }
         .course-button:hover {
             background: #0056b3;
@@ -93,9 +95,11 @@
             "서울숲": {latlng: new naver.maps.LatLng(37.544579, 127.037649), img: "image/서울숲.jpeg", desc: "서울숲은 다양한 꽃과 나무가 있는 아름다운 공원입니다."},
             "남산공원": {latlng: new naver.maps.LatLng(37.5511694, 126.9882266), img: "image/남산공원.jpeg", desc: "남산공원은 서울을 한눈에 볼 수 있는 멋진 장소입니다."},
             "올림픽공원": {latlng: new naver.maps.LatLng(37.516436, 127.115046), img: "image/올림픽공원.jpeg", desc: "올림픽공원은 다양한 꽃과 예술작품이 있는 넓은공원입니다."},
-            "경복궁": {latlng: new naver.maps.LatLng(37.579617, 126.977041), img: "image/경복궁.jpeg", desc: "경복궁은 역사적인 장소로, 아름다운 꽃 정원이 있습니다."}        };
+            "경복궁": {latlng: new naver.maps.LatLng(37.579617, 126.977041), img: "image/경복궁.jpeg", desc: "경복궁은 역사적인 장소로, 아름다운 꽃 정원이 있습니다."}
+        };
 
         var currentInfowindow = null; // 현재 열려 있는 인포윈도우
+        var currentPolyline = null;   // 현재 표시된 폴리라인
 
         function selectCourse(course) {
             var selectedCourse;
@@ -112,52 +116,60 @@
                 var start = places[selectedCourse[0]].latlng;
                 var end = places[selectedCourse[1]].latlng;
 
-                axios.get(`https://naveropenapi.apigw.ntruss.com/map-direction-15/v1/driving`, {
+                axios.get(`https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving`, {
                     params: {
                         start: `${start.lng()},${start.lat()}`,
                         goal: `${end.lng()},${end.lat()}`,
                         option: "trafast"
                     },
                     headers: {
-                        'X-NCP-APIGW-API-KEY-ID': 'YOUR_CLIENT_ID',
-                        'X-NCP-APIGW-API-KEY': 'YOUR_CLIENT_SECRET'
+                        'X-NCP-APIGW-API-KEY-ID': '3n3v7ntkle',
+                        'X-NCP-APIGW-API-KEY': 'c9xc0vQECxIbZS0s4Fh2DoYXfxHXV1dCPpKlsTig'
                     }
                 })
                 .then(response => {
-                    var route = response.data.route.trafast[0].path;
-                    var path = route.map(coord => new naver.maps.LatLng(coord[1], coord[0]));
+                    if (response.data.route && response.data.route.trafast) {
+                        var route = response.data.route.trafast[0].path;
+                        var path = route.map(coord => new naver.maps.LatLng(coord[1], coord[0]));
 
-                    new naver.maps.Polyline({
-                        map: map,
-                        path: path,
-                        strokeColor: course === "A코스" ? '#FF0000' : '#0000FF',
-                        strokeWeight: 5
-                    });
+                        if (currentPolyline) {
+                            currentPolyline.setMap(null); // 이전 경로 제거
+                        }
 
-                    var infoContent = `
-                        <div>
-                            <h4>${course}</h4>
-                            <p>예상 시간: ${Math.floor(response.data.route.trafast[0].summary.duration / 60)}분</p>
-                        </div>
-                    `;
+                        currentPolyline = new naver.maps.Polyline({
+                            map: map,
+                            path: path,
+                            strokeColor: course === "A코스" ? '#FF0000' : '#0000FF',
+                            strokeWeight: 5
+                        });
 
-                    if (currentInfowindow) {
-                        currentInfowindow.close();
+                        var infoContent = `
+                            <div>
+                                <h4>${course}</h4>
+                                <p>예상 시간: ${Math.floor(response.data.route.trafast[0].summary.duration / 60)}분</p>
+                            </div>
+                        `;
+
+                        if (currentInfowindow) {
+                            currentInfowindow.close();
+                        }
+
+                        var infowindow = new naver.maps.InfoWindow({
+                            content: infoContent,
+                            maxWidth: 200,
+                            borderColor: "#f1f1f1",
+                            borderWidth: 2,
+                            position: end
+                        });
+
+                        infowindow.open(map);
+                        currentInfowindow = infowindow;
+                    } else {
+                        console.error("경로 데이터를 찾을 수 없습니다.");
                     }
-
-                    var infowindow = new naver.maps.InfoWindow({
-                        content: infoContent,
-                        maxWidth: 200,
-                        borderColor: "#f1f1f1",
-                        borderWidth: 2,
-                        position: end
-                    });
-
-                    infowindow.open(map);
-                    currentInfowindow = infowindow;
                 })
                 .catch(error=> {
-                    console.error(error);
+                    console.error("경로 요청 실패:", error);
                 });
             }
         }
@@ -166,8 +178,7 @@
             var sidebar = document.getElementById("sidebar");
             sidebar.classList.toggle("open");
             var mapDiv = document.getElementById("map");
-            mapDiv.style.transition = "width 0.3s"; // 추가된 부분
-            mapDiv.style.width = sidebar.classList.contains("open") ? "calc(100% - 250px)" : "100%";
+            mapDiv.style.width = sidebar.classList.contains("open") ? "calc(100% - 300px)" : "100%";
         }
         
         Object.keys(places).forEach(placeName => {
@@ -175,13 +186,13 @@
             var marker = new naver.maps.Marker({
                 map: map,
                 position: place.latlng,
-                title: placeName // placeName으로 수정
+                title: placeName
             });
 
             var contentString = `
                 <div style="width:200px;text-align:center;">
-                    <h4>${placeName}</h4> <!-- placeName으로 수정 -->
-                    <img src="${place.img}" alt="${placeName}" style="width:100%;height:auto;"> <!-- placeName으로 수정 -->
+                    <h4>${placeName}</h4>
+                    <img src="${place.img}" alt="${placeName}" style="width:100%;height:auto;">
                     <p>${place.desc}</p>
                 </div>
             `;
