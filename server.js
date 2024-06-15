@@ -175,7 +175,6 @@ app.post('/api/posts', upload.single('image'), function(req, res) {
   });
 });
 
-// 기상청 API 호출 함수
 async function getWeatherData() {
   const now = new Date();
   const year = now.getFullYear();
@@ -212,16 +211,17 @@ async function getWeatherData() {
   try {
     const response = await axios.get(endpoint, { params });
     const data = response.data;
-    if (data.response.header.resultCode === '00') {
+    if (data && data.response && data.response.header && data.response.header.resultCode === '00') {
       return data.response.body.items.item;
     } else {
-      throw new Error(data.response.header.resultMsg);
+      throw new Error(data.response.header ? data.response.header.resultMsg : 'Invalid response structure');
     }
   } catch (error) {
     console.error('API 호출 중 오류 발생:', error);
     return null;
   }
 }
+
 
 // 날씨 정보 API
 app.get('/api/weather', async function(req, res) {
