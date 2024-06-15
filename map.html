@@ -28,20 +28,38 @@
             transition: right 0.3s;
             z-index: 1000;
         }
-        
         #sidebar.open {
             right: 0;
         }
-        #toggle-button {
+        #weather-sidebar {
+            width: 300px;
+            height: 100vh;
+            background-color: #f4f4f4;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            position: fixed;
+            right: -300px;
+            transition: right 0.3s;
+            z-index: 1000;
+        }
+        #weather-sidebar.open {
+            right: 0;
+        }
+        #toggle-button, #weather-button {
             position: absolute;
             top: 20px;
-            left: 20px;
             z-index: 1001;
             background: #007bff;
             color: #fff;
             border: none;
             padding: 10px 20px;
             cursor: pointer;
+        }
+        #toggle-button {
+            left: 20px;
+        }
+        #weather-button {
+            left: 140px;
         }
         .sidebar-header {
             padding: 15px;
@@ -68,10 +86,33 @@
         .course-button:hover {
             background: #0056b3;
         }
+        #weather-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #weather-info h3 {
+            margin-top: 0;
+        }
+        #loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border-radius: 5px;
+            z-index: 2000;
+        }
     </style>
 </head>
 <body>
     <button id="toggle-button" onclick="toggleSidebar()">코스 선택</button>
+    <button id="weather-button" onclick="toggleWeatherSidebar()">날씨 정보</button>
     <div id="sidebar">
         <div class="sidebar-header">
             <h2>코스 선택</h2>
@@ -81,7 +122,19 @@
             <div class="course-button" onclick="selectCourse('B코스')">B코스: 남산공원 - 서울숲</div>
         </div>
     </div>
+    <div id="weather-sidebar">
+        <div class="sidebar-header">
+            <h2>날씨 정보</h2>
+        </div>
+        <div class="sidebar-content">
+            <div id="weather-info" style="display: none;">
+                <h3>현재 날씨</h3>
+                <p id="weather-details">날씨 정보를 가져오는 중...</p>
+            </div>
+        </div>
+    </div>
     <div id="map"></div>
+    <div id="loading">Loading...</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
@@ -174,13 +227,56 @@
             }
         }
 
+        function showWeatherInfo() {
+            var weatherInfoDiv = document.getElementById("weather-info");
+            var loadingDiv = document.getElementById("loading");
+            loadingDiv.style.display = "block";
+
+            axios.get('/api/weather')
+                .then(response => {
+                    var weatherData = response.data;
+                    var weatherDetails = `
+                        <p>기온: ${weatherData[0].fcstValue}°C</p>
+                        <p>강수 확률: ${weatherData[1].fcstValue}%</p>
+                        <p>습도: ${weatherData[2].fcstValue}%</p>
+                    `;
+                    document.getElementById("weather-details").innerHTML = weatherDetails;
+                    weatherInfoDiv.style.display = "block";
+                })
+                .catch(error => {
+                    console.error("날씨 정보 요청 실패:", error);
+                    document.getElementById("weather-details").innerHTML = "날씨 정보를 가져오는 데 실패했습니다.";
+                })
+                .finally(() => {
+                    loadingDiv.style.display = "none";
+                });
+        }
+
         function toggleSidebar() {
             var sidebar = document.getElementById("sidebar");
             sidebar.classList.toggle("open");
             var mapDiv = document.getElementById("map");
-            mapDiv.style.width = sidebar.classList.contains("open") ? "calc(100% - 300px)" : "100%";
+            if (sidebar.classList.contains("open")) {
+                mapDiv.style.width = "calc(100% - 300px)";
+                document.getElementById("weather-sidebar").classList.remove("open");
+            } else {
+                mapDiv.style.width = "100%";
+            }
         }
-        
+
+        function toggleWeatherSidebar() {
+            var weatherSidebar = document.getElementById("weather-sidebar");
+            weatherSidebar.classList.toggle("open");
+            var mapDiv = document.getElementById("map");
+            if (weatherSidebar.classList.contains("open")) {
+                mapDiv.style.width = "calc(100% - 300px)";
+                document.getElementById("sidebar").classList.remove("open");
+                showWeatherInfo();
+            } else {
+                mapDiv.style.width = "100%";
+            }
+        }
+
         Object.keys(places).forEach(placeName => {
             var place = places[placeName];
             var marker = new naver.maps.Marker({
