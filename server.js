@@ -196,7 +196,7 @@ async function getWeatherData() {
   const baseDate = year + month + day;
 
   const params = {
-    serviceKey: process.env.SERVICE_KEY,
+    serviceKey: process.env.WEATHER_API_KEY,
     pageNo: '1',
     numOfRows: '10',
     dataType: 'JSON',
