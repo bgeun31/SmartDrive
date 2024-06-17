@@ -1,50 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
     <title>서울 꽃나들이 장소</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=3n3v7ntkle"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             display: flex;
         }
+
         #map {
             width: 100%;
             height: 100vh;
             transition: width 0.3s;
         }
-        #sidebar {
+
+        #sidebar, #weather-sidebar {
             width: 300px;
             height: 100vh;
             background-color: #f4f4f4;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             position: fixed;
             right: -300px;
             transition: right 0.3s;
             z-index: 1000;
         }
-        #sidebar.open {
+
+        #sidebar.open, #weather-sidebar.open {
             right: 0;
         }
-        #weather-sidebar {
-            width: 300px;
-            height: 100vh;
-            background-color: #f4f4f4;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            position: fixed;
-            right: -300px;
-            transition: right 0.3s;
-            z-index: 1000;
-        }
-        #weather-sidebar.open {
-            right: 0;
-        }
+
         #toggle-button, #weather-button {
             position: absolute;
             top: 20px;
@@ -55,22 +47,27 @@
             padding: 10px 20px;
             cursor: pointer;
         }
+
         #toggle-button {
             left: 20px;
         }
+
         #weather-button {
             left: 140px;
         }
+
         .sidebar-header {
             padding: 15px;
             background: #333;
             color: #fff;
             text-align: center;
         }
+
         .sidebar-content {
             padding: 15px;
             text-align: right;
         }
+
         .course-button {
             display: block;
             width: calc(100% - 30px);
@@ -83,9 +80,32 @@
             cursor: pointer;
             border-radius: 5px;
         }
+
         .course-button:hover {
             background: #0056b3;
         }
+
+        .info-window {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info-window h4 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .info-window p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .info-window .info-item {
+            margin-bottom: 8px;
+        }
+
         #weather-info {
             margin-top: 20px;
             padding: 10px;
@@ -93,9 +113,11 @@
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         #weather-info h3 {
             margin-top: 0;
         }
+
         #loading {
             display: none;
             position: fixed;
@@ -103,13 +125,14 @@
             left: 50%;
             transform: translate(-50%, -50%);
             padding: 10px 20px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.7);
             color: #fff;
             border-radius: 5px;
             z-index: 2000;
         }
     </style>
 </head>
+
 <body>
     <button id="toggle-button" onclick="toggleSidebar()">코스 선택</button>
     <button id="weather-button" onclick="toggleWeatherSidebar()">날씨 정보</button>
@@ -145,10 +168,10 @@
         var map = new naver.maps.Map('map', mapOptions);
 
         var places = {
-            "서울숲": {latlng: new naver.maps.LatLng(37.544579, 127.037649), img: "image/서울숲.jpeg", desc: "서울숲은 다양한 꽃과 나무가 있는 아름다운 공원입니다."},
-            "남산공원": {latlng: new naver.maps.LatLng(37.5511694, 126.9882266), img: "image/남산공원.jpeg", desc: "남산공원은 서울을 한눈에 볼 수 있는 멋진 장소입니다."},
-            "올림픽공원": {latlng: new naver.maps.LatLng(37.516436, 127.115046), img: "image/올림픽공원.jpeg", desc: "올림픽공원은 다양한 꽃과 예술작품이 있는 넓은공원입니다."},
-            "경복궁": {latlng: new naver.maps.LatLng(37.579617, 126.977041), img: "image/경복궁.jpeg", desc: "경복궁은 역사적인 장소로, 아름다운 꽃 정원이 있습니다."}
+            "서울숲": { latlng: new naver.maps.LatLng(37.544579, 127.037649), img: "image/서울숲.jpeg", desc: "서울숲은 다양한 꽃과 나무가 있는 아름다운 공원입니다." },
+            "남산공원": { latlng: new naver.maps.LatLng(37.5511694, 126.9882266), img: "image/남산공원.jpeg", desc: "남산공원은 서울을 한눈에 볼 수 있는 멋진 장소입니다." },
+            "올림픽공원": { latlng: new naver.maps.LatLng(37.516436, 127.115046), img: "image/올림픽공원.jpeg", desc: "올림픽공원은 다양한 꽃과 예술작품이 있는 넓은공원입니다." },
+            "경복궁": { latlng: new naver.maps.LatLng(37.579617, 126.977041), img: "image/경복궁.jpeg", desc: "경복궁은 역사적인 장소로, 아름다운 꽃 정원이 있습니다." }
         };
 
         var currentInfowindow = null; // 현재 열려 있는 인포윈도우
@@ -156,7 +179,7 @@
 
         function selectCourse(course) {
             var selectedCourse;
-            switch(course) {
+            switch (course) {
                 case 'A코스':
                     selectedCourse = ["서울숲", "올림픽공원"];
                     break;
@@ -180,50 +203,50 @@
                         'X-NCP-APIGW-API-KEY': 'c9xc0vQECxIbZS0s4Fh2DoYXfxHXV1dCPpKlsTig'
                     }
                 })
-                .then(response => {
-                    if (response.data.route && response.data.route.trafast) {
-                        var route = response.data.route.trafast[0].path;
-                        var path = route.map(coord => new naver.maps.LatLng(coord[1], coord[0]));
+                    .then(response => {
+                        if (response.data.route && response.data.route.trafast) {
+                            var route = response.data.route.trafast[0].path;
+                            var path = route.map(coord => new naver.maps.LatLng(coord[1], coord[0]));
 
-                        if (currentPolyline) {
-                            currentPolyline.setMap(null); // 이전 경로 제거
-                        }
+                            if (currentPolyline) {
+                                currentPolyline.setMap(null); // 이전 경로 제거
+                            }
 
-                        currentPolyline = new naver.maps.Polyline({
-                            map: map,
-                            path: path,
-                            strokeColor: course === "A코스" ? '#FF0000' : '#0000FF',
-                            strokeWeight: 5
-                        });
+                            currentPolyline = new naver.maps.Polyline({
+                                map: map,
+                                path: path,
+                                strokeColor: course === "A코스" ? '#FF0000' : '#0000FF',
+                                strokeWeight: 5
+                            });
 
-                        var infoContent = `
+                            var infoContent = `
                             <div>
                                 <h4>${course}</h4>
                                 <p>예상 시간: ${Math.floor(response.data.route.trafast[0].summary.duration / 60)}분</p>
                             </div>
                         `;
 
-                        if (currentInfowindow) {
-                            currentInfowindow.close();
+                            if (currentInfowindow) {
+                                currentInfowindow.close();
+                            }
+
+                            var infowindow = new naver.maps.InfoWindow({
+                                content: infoContent,
+                                maxWidth: 200,
+                                borderColor: "#f1f1f1",
+                                borderWidth: 2,
+                                position: end
+                            });
+
+                            infowindow.open(map);
+                            currentInfowindow = infowindow;
+                        } else {
+                            console.error("경로 데이터를 찾을 수 없습니다.");
                         }
-
-                        var infowindow = new naver.maps.InfoWindow({
-                            content: infoContent,
-                            maxWidth: 200,
-                            borderColor: "#f1f1f1",
-                            borderWidth: 2,
-                            position: end
-                        });
-
-                        infowindow.open(map);
-                        currentInfowindow = infowindow;
-                    } else {
-                        console.error("경로 데이터를 찾을 수 없습니다.");
-                    }
-                })
-                .catch(error=> {
-                    console.error("경로 요청 실패:", error);
-                });
+                    })
+                    .catch(error => {
+                        console.error("경로 요청 실패:", error);
+                    });
             }
         }
 
@@ -300,13 +323,87 @@
                 borderWidth: 2
             });
 
-            naver.maps.Event.addListener(marker, "click", function() {
+            naver.maps.Event.addListener(marker, "click", function () {
                 if (currentInfowindow) {
                     currentInfowindow.close();
                 }
                 infowindow.open(map, marker);
                 currentInfowindow = infowindow;
             });
+        });
+
+        async function fetchData() {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            return data;
+        }
+
+        function convertCoords(x, y) {
+            const firstProjection = '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs';
+            const secondProjection = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
+            return proj4(firstProjection, secondProjection, [x, y]);
+        }
+
+        function formatAccInfo(info) {
+            return info.replace(/○/g, '<br>○');
+        }
+
+        function formatDateTime(date, time) {
+            return `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)} ${time.slice(0, 2)}:${time.slice(2, 4)}:${time.slice(4, 6)}`;
+        }
+
+        function initMapWithAccidents(data) {
+            data.forEach(acc => {
+                const [lon, lat] = convertCoords(acc.grs80tm_x, acc.grs80tm_y);
+
+                if (isNaN(lon) || isNaN(lat)) {
+                    console.error(`Invalid coordinates for acc_id: ${acc.acc_id}`);
+                    return;
+                }
+
+                const formattedAccInfo = formatAccInfo(acc.acc_info);
+                const occrDateTime = formatDateTime(acc.occr_date, acc.occr_time);
+                const expClrDateTime = formatDateTime(acc.exp_clr_date, acc.exp_clr_time);
+
+                const contentString = `
+              <div class="info-window">
+                <div class="info-item">
+                  <h4>돌발 코드: ${acc.acc_type}</h4>
+                </div>
+                <div class="info-item">
+                  <p><strong>일시:</strong> ${occrDateTime}</p>
+                  <p><strong>발생 시각:</strong> ${occrDateTime}</p>
+                  <p><strong>종료 일시:</strong> ${expClrDateTime}</p>
+                </div>
+                <div class="info-item">
+                  <p><strong>세부 사항:</strong> ${formattedAccInfo}</p>
+                </div>
+              </div>`;
+
+                const infoWindow = new naver.maps.InfoWindow({
+                    content: contentString
+                });
+
+                const marker = new naver.maps.Marker({
+                    position: new naver.maps.LatLng(lat, lon),
+                    map: map,
+                    title: acc.acc_type,
+                    icon: {
+                        url: 'https://topis.seoul.go.kr/images/map/A04.png', // 마커 이미지 URL을 이곳에 입력합니다.
+                        size: new naver.maps.Size(32, 32), // 마커 이미지의 크기
+                        origin: new naver.maps.Point(0, 0),
+                        anchor: new naver.maps.Point(16, 32) // 마커 앵커 포인트
+                    }
+                });
+
+                naver.maps.Event.addListener(marker, 'click', function () {
+                    infoWindow.open(map, marker);
+                });
+            });
+        }
+
+        fetchData().then(data => {
+            initMapWithAccidents(data);
         });
     </script>
 </body>
