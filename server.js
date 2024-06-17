@@ -4,20 +4,16 @@ const dotenv = require('dotenv');
 const session = require('express-session');
 const passport = require('passport');
 const NaverStrategy = require('passport-naver').Strategy;
-const mysql = require('mysql2'); // MySQL 연동
-const multer = require('multer'); // 파일 업로드를 위한 multer 라이브러리
+const mysql = require('mysql2');
+const multer = require('multer');
 const fs = require('fs');
 const axios = require('axios');
+const cors = require('cors');
 
-dotenv.config(); // 가장 먼저 환경 변수를 로드
+dotenv.config();
 
 var xml2js = require('xml2js');
 
-var url = 'http://openapi.seoul.go.kr:8088/6c6d6f786673736b383449504f536a/xml/AccInfo/1/5/';
-
-
-
-// MySQL 연결 설정
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -30,7 +26,6 @@ db.connect((err) => {
   console.log('MySQL Connected...');
 });
 
-// Passport 설정
 passport.use(new NaverStrategy({
   clientID: process.env.NAVER_CLIENT_ID,
   clientSecret: process.env.NAVER_CLIENT_SECRET,
@@ -53,21 +48,19 @@ function(accessToken, refreshToken, profile, done) {
 
 const app = express();
 
-// 세션 설정
+app.use(cors());
+
 app.use(session({
   secret: 'd3MHfBcvbO',
   resave: false,
   saveUninitialized: true
 }));
 
-// Passport 초기화
 app.use(passport.initialize());
 app.use(passport.session());
 
-// 정적 파일 제공
 app.use(express.static(path.join(__dirname)));
 
-// Passport 시리얼라이즈 설정
 passport.serializeUser(function(user, done) {
   done(null, user);
 });
@@ -76,7 +69,6 @@ passport.deserializeUser(function(obj, done) {
   done(null, obj);
 });
 
-// multer 설정
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, 'uploads/');
@@ -88,12 +80,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// 업로드 디렉토리 생성
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
-// 네이버 로그인 라우트
 app.get('/auth/naver',
   passport.authenticate('naver'));
 
@@ -104,7 +94,6 @@ app.get('/auth/naver/callback',
     res.redirect('/');
   });
 
-// 로그아웃 라우트
 app.get('/logout', function(req, res) {
   req.logout(function(err) {
     if (err) { return next(err); }
@@ -112,7 +101,6 @@ app.get('/logout', function(req, res) {
   });
 });
 
-// 인증 상태 체크 미들웨어
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -120,7 +108,6 @@ function isAuthenticated(req, res, next) {
   res.redirect('/login');
 }
 
-// 기본 라우트 설정
 app.get('/', function(req, res) {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -145,7 +132,6 @@ app.get('/community', function(req, res) {
   res.sendFile(path.join(__dirname, 'community.html'));
 });
 
-// 인기 게시물 API
 app.get('/api/popular-posts', function(req, res) {
   db.query('SELECT * FROM posts ORDER BY likes DESC, views DESC LIMIT 3', function(err, results) {
     if (err) throw err;
@@ -153,7 +139,6 @@ app.get('/api/popular-posts', function(req, res) {
   });
 });
 
-// 일반 게시물 API
 app.get('/api/posts', function(req, res) {
   db.query('SELECT * FROM posts ORDER BY created_at DESC', function(err, results) {
     if (err) throw err;
@@ -161,7 +146,6 @@ app.get('/api/posts', function(req, res) {
   });
 });
 
-// 좋아요 기능 API
 app.post('/api/posts/:id/like', function(req, res) {
   const postId = req.params.id;
   db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId], function(err, result) {
@@ -170,7 +154,6 @@ app.post('/api/posts/:id/like', function(req, res) {
   });
 });
 
-// 게시글 작성 API
 app.post('/api/posts', upload.single('image'), function(req, res) {
   const { title, author, content } = req.body;
   const imageUrl = req.file ? '/uploads/' + req.file.filename : null;
@@ -181,7 +164,6 @@ app.post('/api/posts', upload.single('image'), function(req, res) {
   });
 });
 
-// 날씨 api
 async function getWeatherData() {
   const now = new Date();
   const year = now.getFullYear();
@@ -190,7 +172,6 @@ async function getWeatherData() {
   const hours = now.getHours();
   const minutes = now.getMinutes();
 
-  // 기상청 API는 3시간 단위로 제공되므로 가장 가까운 발표 시각을 계산합니다.
   const baseTime = hours < 2 ? '2300' :
                    hours < 5 ? '0200' :
                    hours < 8 ? '0500' :
@@ -209,8 +190,8 @@ async function getWeatherData() {
     dataType: 'JSON',
     base_date: baseDate,
     base_time: baseTime,
-    nx: '60',  // 예: 서울시 종로구 (x좌표)
-    ny: '127'  // 예: 서울시 종로구 (y좌표)
+    nx: '60',
+    ny: '127'
   };
 
   const endpoint = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
@@ -229,7 +210,6 @@ async function getWeatherData() {
   }
 }
 
-// 날씨 정보 API
 app.get('/api/weather', async function(req, res) {
   const weatherData = await getWeatherData();
   if (weatherData) {
@@ -239,7 +219,6 @@ app.get('/api/weather', async function(req, res) {
   }
 });
 
-// 서울 실시간 돌발 상황 api
 async function getSeoulAccInfo(start = 1, end = 10) {
   const url = `http://openapi.seoul.go.kr:8088/6c6d6f786673736b383449504f536a/xml/AccInfo/${start}/${end}/`;
 
@@ -285,7 +264,29 @@ app.get('/api/data', async function(req, res) {
   }
 });
 
-// 서버 시작
+app.get('/api/direction', async (req, res) => {
+  const { start, goal } = req.query;
+  const apiKeyId = process.env.MAP_CLIENT_ID;
+  const apiKey = process.env.MAP_CLIENT_SECRET;
+
+  try {
+      const response = await axios.get(`https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving`, {
+          params: {
+              start,
+              goal,
+              option: 'trafast'
+          },
+          headers: {
+              'X-NCP-APIGW-API-KEY-ID': apiKeyId,
+              'X-NCP-APIGW-API-KEY': apiKey
+          }
+      });
+      res.json(response.data);
+  } catch (error) {
+      res.status(500).send('Error fetching direction data');
+  }
+});
+
 app.listen(8080, function() {
   console.log('Server is listening on port 8080');
 });
