@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Community</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .container {
+            padding: 2rem;
+        }
+        .post {
+            background-color: white;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .post h2 {
+            margin-top: 0;
+        }
+        .post-content {
+            display: none;
+            margin-top: 1rem;
+        }
+        .post-form {
+            display: none;
+            background-color: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .post-form input,
+        .post-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .post-form button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .post-form button:hover {
+            background-color: #45a049;
+        }
+        .show-form-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .show-form-button:hover {
+            background-color: #45a049;
+        }
+        .comment-section {
+            margin-top: 1rem;
+            background-color: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .comment {
+            margin-bottom: 0.5rem;
+        }
+        .main-page-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .main-page-button:hover {
+            background-color: #45a049;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+    <script>
+        function togglePostForm() {
+            var postForm = document.getElementById('postFormContainer');
+            if (postForm.style.display === 'block') {
+                postForm.style.display = 'none';
+            } else {
+                postForm.style.display = 'block';
+            }
+        }
+
+        function addPost(event) {
+            event.preventDefault();
+            
+            // Get form values
+            var title = document.getElementById('postTitle').value;
+            var content = document.getElementById('postContent').value;
+            var author = document.getElementById('postAuthor').value;
+            
+            // Create new post element
+            var newPost = document.createElement('div');
+            newPost.className = 'post';
+            newPost.onclick = function() {
+                togglePostContent(newPostContent.id);
+            };
+            newPost.innerHTML = '<h2>' + title + '</h2>';
+            
+            // Create post content
+            var newPostContent = document.createElement('div');
+            newPostContent.className = 'post-content';
+            newPostContent.id = 'postContent' + (document.getElementsByClassName('post').length + 1);
+            newPostContent.innerHTML = '<p><strong>작성자: </strong>' + author + '</p><p>' + content + '</p><div class="comment-section"><h3>댓글</h3><form onsubmit="addComment(event, this)"><input type="text" placeholder="댓글 작성..." required><button type="submit">댓글 달기</button></form><div class="comments"></div></div>';
+            
+            // Add new post and post content to the posts container
+            var postContainer = document.createElement('div');
+            postContainer.appendChild(newPost);
+            postContainer.appendChild(newPostContent);
+            
+            var postsContainer = document.getElementById('postsContainer');
+            postsContainer.insertBefore(postContainer, postsContainer.firstChild);
+            
+            // Clear form
+            document.getElementById('postForm').reset();
+            
+            // Hide form
+            togglePostForm();
+        }
+
+        function togglePostContent(contentId) {
+            var contentElement = document.getElementById(contentId);
+            if (contentElement.style.display === 'block') {
+                contentElement.style.display = 'none';
+            } else {
+                contentElement.style.display = 'block';
+            }
+        }
+
+        function addComment(event, form) {
+            event.preventDefault();
+            var commentText = form.querySelector('input').value;
+            var commentSection = form.nextElementSibling;
+            var newComment = document.createElement('div');
+            newComment.className = 'comment';
+            newComment.innerText = commentText;
+            commentSection.appendChild(newComment);
+            form.reset();
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Community</h1>
+    </header>
+    <div class="container">
+        <button class="show-form-button" onclick="togglePostForm()">게시글 작성</button>
+        <button class="main-page-button" onclick="window.location.href='index.html'">메인 페이지로 이동</button>
+        <div id="postFormContainer" class="post-form">
+            <form id="postForm" onsubmit="addPost(event)">
+                <input type="text" id="postTitle" placeholder="제목" required>
+                <input type="text" id="postAuthor" placeholder="작성자" required>
+                <textarea id="postContent" rows="4" placeholder="게시글 작성..." required></textarea>
+                <button type="submit">게시</button>
+            </form>
+        </div>
+        <div id="postsContainer">
+            <div>
+                <div class="post" onclick="togglePostContent('postContent1')">
+                    <h2>Welcome to the Community!</h2>
+                </div>
+                <div id="postContent1" class="post-content">
+                    <p><strong>작성자: </strong>관리자</p>
+                    <p>This is where users can share their drive experiences, ask questions, and connect with each other.</p>
+                    <div class="comment-section">
+                        <h3>댓글</h3>
+                        <form onsubmit="addComment(event, this)">
+                            <input type="text" placeholder="댓글 작성..." required>
+                            <button type="submit">댓글 달기</button>
+                        </form>
+                        <div class="comments"></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="post" onclick="togglePostContent('postContent2')">
+                    <h2>Share Your Favorite Drive Routes</h2>
+                </div>
+                <div id="postContent2" class="post-content">
+                    <p><strong>작성자: </strong>관리자</p>
+                    <p>Have a favorite drive route? Share it here and let others know why you love it!</p>
+                    <div class="comment-section">
+                        <h3>댓글</h3>
+                        <form onsubmit="addComment(event, this)">
+                            <input type="text" placeholder="댓글 작성..." required>
+                            <button type="submit">댓글 달기</button>
+                        </form>
+                        <div class="comments"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- New posts will be added here -->
+        </div>
+    </div>
+    <footer>
+        &copy; 2024 Smart Drive Community. All rights reserved.
+    </footer>
+</body>
+</html>
