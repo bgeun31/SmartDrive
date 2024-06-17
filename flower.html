@@ -1,64 +1,313 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>꽃나들이 추천 코스</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <title>서울 꽃나들이 장소</title>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=3n3v7ntkle"></script>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
         }
-
         #map {
             width: 100%;
             height: 100vh;
+            transition: width 0.3s;
         }
-
-        .marker-label {
-            font-size: 14px;
-            padding: 5px;
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        #sidebar {
+            width: 300px;
+            height: 100vh;
+            background-color: #f4f4f4;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            position: fixed;
+            right: -300px;
+            transition: right 0.3s;
+            z-index: 1000;
+        }
+        #sidebar.open {
+            right: 0;
+        }
+        #weather-sidebar {
+            width: 300px;
+            height: 100vh;
+            background-color: #f4f4f4;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            position: fixed;
+            right: -300px;
+            transition: right 0.3s;
+            z-index: 1000;
+        }
+        #weather-sidebar.open {
+            right: 0;
+        }
+        #toggle-button, #weather-button {
+            position: absolute;
+            top: 20px;
+            z-index: 1001;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #toggle-button {
+            left: 20px;
+        }
+        #weather-button {
+            left: 140px;
+        }
+        .sidebar-header {
+            padding: 15px;
+            background: #333;
+            color: #fff;
+            text-align: center;
+        }
+        .sidebar-content {
+            padding: 15px;
+            text-align: right;
+        }
+        .course-button {
+            display: block;
+            width: calc(100% - 30px);
+            padding: 10px;
+            margin: 5px auto;
+            background: #007bff;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .course-button:hover {
+            background: #0056b3;
+        }
+        #weather-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #weather-info h3 {
+            margin-top: 0;
+        }
+        #loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border-radius: 5px;
+            z-index: 2000;
         }
     </style>
-    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=3n3v7ntkle"></script>
+</head>
+<body>
+    <button id="toggle-button" onclick="toggleSidebar()">코스 선택</button>
+    <button id="weather-button" onclick="toggleWeatherSidebar()">날씨 정보</button>
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <h2>코스 선택</h2>
+        </div>
+        <div class="sidebar-content">
+            <div class="course-button" onclick="selectCourse('A코스')">A코스: 서울숲 - 올림픽공원</div>
+            <div class="course-button" onclick="selectCourse('B코스')">B코스: 남산공원 - 서울숲</div>
+        </div>
+    </div>
+    <div id="weather-sidebar">
+        <div class="sidebar-header">
+            <h2>날씨 정보</h2>
+        </div>
+        <div class="sidebar-content">
+            <div id="weather-info" style="display: none;">
+                <h3>현재 날씨</h3>
+                <p id="weather-details">날씨 정보를 가져오는 중...</p>
+            </div>
+        </div>
+    </div>
+    <div id="map"></div>
+    <div id="loading">Loading...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var map = new naver.maps.Map('map', {
-                center: new naver.maps.LatLng(37.3595704, 127.105399),
-                zoom: 10
+        var mapOptions = {
+            center: new naver.maps.LatLng(37.5665, 126.9780),
+            zoom: 12
+        };
+        var map = new naver.maps.Map('map', mapOptions);
+
+        var places = {
+            "서울숲": {latlng: new naver.maps.LatLng(37.544579, 127.037649), img: "image/서울숲.jpeg", desc: "서울숲은 다양한 꽃과 나무가 있는 아름다운 공원입니다."},
+            "남산공원": {latlng: new naver.maps.LatLng(37.5511694, 126.9882266), img: "image/남산공원.jpeg", desc: "남산공원은 서울을 한눈에 볼 수 있는 멋진 장소입니다."},
+            "올림픽공원": {latlng: new naver.maps.LatLng(37.516436, 127.115046), img: "image/올림픽공원.jpeg", desc: "올림픽공원은 다양한 꽃과 예술작품이 있는 넓은공원입니다."},
+            "경복궁": {latlng: new naver.maps.LatLng(37.579617, 126.977041), img: "image/경복궁.jpeg", desc: "경복궁은 역사적인 장소로, 아름다운 꽃 정원이 있습니다."}
+        };
+
+        var currentInfowindow = null; // 현재 열려 있는 인포윈도우
+        var currentPolyline = null;   // 현재 표시된 폴리라인
+
+        function selectCourse(course) {
+            var selectedCourse;
+            switch(course) {
+                case 'A코스':
+                    selectedCourse = ["서울숲", "올림픽공원"];
+                    break;
+                case 'B코스':
+                    selectedCourse = ["남산공원", "서울숲"];
+                    break;
+            }
+
+            if (selectedCourse) {
+                var start = places[selectedCourse[0]].latlng;
+                var end = places[selectedCourse[1]].latlng;
+
+                axios.get(`https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving`, {
+                    params: {
+                        start: `${start.lng()},${start.lat()}`,
+                        goal: `${end.lng()},${end.lat()}`,
+                        option: "trafast"
+                    },
+                    headers: {
+                        'X-NCP-APIGW-API-KEY-ID': '3n3v7ntkle',
+                        'X-NCP-APIGW-API-KEY': 'c9xc0vQECxIbZS0s4Fh2DoYXfxHXV1dCPpKlsTig'
+                    }
+                })
+                .then(response => {
+                    if (response.data.route && response.data.route.trafast) {
+                        var route = response.data.route.trafast[0].path;
+                        var path = route.map(coord => new naver.maps.LatLng(coord[1], coord[0]));
+
+                        if (currentPolyline) {
+                            currentPolyline.setMap(null); // 이전 경로 제거
+                        }
+
+                        currentPolyline = new naver.maps.Polyline({
+                            map: map,
+                            path: path,
+                            strokeColor: course === "A코스" ? '#FF0000' : '#0000FF',
+                            strokeWeight: 5
+                        });
+
+                        var infoContent = `
+                            <div>
+                                <h4>${course}</h4>
+                                <p>예상 시간: ${Math.floor(response.data.route.trafast[0].summary.duration / 60)}분</p>
+                            </div>
+                        `;
+
+                        if (currentInfowindow) {
+                            currentInfowindow.close();
+                        }
+
+                        var infowindow = new naver.maps.InfoWindow({
+                            content: infoContent,
+                            maxWidth: 200,
+                            borderColor: "#f1f1f1",
+                            borderWidth: 2,
+                            position: end
+                        });
+
+                        infowindow.open(map);
+                        currentInfowindow = infowindow;
+                    } else {
+                        console.error("경로 데이터를 찾을 수 없습니다.");
+                    }
+                })
+                .catch(error=> {
+                    console.error("경로 요청 실패:", error);
+                });
+            }
+        }
+
+        function showWeatherInfo() {
+            var weatherInfoDiv = document.getElementById("weather-info");
+            var loadingDiv = document.getElementById("loading");
+            loadingDiv.style.display = "block";
+
+            axios.get('/api/weather')
+                .then(response => {
+                    var weatherData = response.data;
+                    var weatherDetails = `
+                        <p>기온: ${weatherData[0].fcstValue}°C</p>
+                        <p>강수 확률: ${weatherData[1].fcstValue}%</p>
+                        <p>습도: ${weatherData[2].fcstValue}%</p>
+                    `;
+                    document.getElementById("weather-details").innerHTML = weatherDetails;
+                    weatherInfoDiv.style.display = "block";
+                })
+                .catch(error => {
+                    console.error("날씨 정보 요청 실패:", error);
+                    document.getElementById("weather-details").innerHTML = "날씨 정보를 가져오는 데 실패했습니다.";
+                })
+                .finally(() => {
+                    loadingDiv.style.display = "none";
+                });
+        }
+
+        function toggleSidebar() {
+            var sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("open");
+            var mapDiv = document.getElementById("map");
+            if (sidebar.classList.contains("open")) {
+                mapDiv.style.width = "calc(100% - 300px)";
+                document.getElementById("weather-sidebar").classList.remove("open");
+            } else {
+                mapDiv.style.width = "100%";
+            }
+        }
+
+        function toggleWeatherSidebar() {
+            var weatherSidebar = document.getElementById("weather-sidebar");
+            weatherSidebar.classList.toggle("open");
+            var mapDiv = document.getElementById("map");
+            if (weatherSidebar.classList.contains("open")) {
+                mapDiv.style.width = "calc(100% - 300px)";
+                document.getElementById("sidebar").classList.remove("open");
+                showWeatherInfo();
+            } else {
+                mapDiv.style.width = "100%";
+            }
+        }
+
+        Object.keys(places).forEach(placeName => {
+            var place = places[placeName];
+            var marker = new naver.maps.Marker({
+                map: map,
+                position: place.latlng,
+                title: placeName
             });
 
-            // 추천 코스 마커 설정
-            var recommendedPlaces = [
-                { title: '추천 장소 1', lat: 37.3595704, lng: 127.105399 },
-                { title: '추천 장소 2', lat: 37.3615704, lng: 127.105399 },
-                { title: '추천 장소 3', lat: 37.3635704, lng: 127.105399 }
-            ];
+            var contentString = `
+                <div style="width:200px;text-align:center;">
+                    <h4>${placeName}</h4>
+                    <img src="${place.img}" alt="${placeName}" style="width:100%;height:auto;">
+                    <p>${place.desc}</p>
+                </div>
+            `;
 
-            recommendedPlaces.forEach(function(place) {
-                var marker = new naver.maps.Marker({
-                    position: new naver.maps.LatLng(place.lat, place.lng),
-                    map: map
-                });
+            var infowindow = new naver.maps.InfoWindow({
+                content: contentString,
+                maxWidth: 200,
+                borderColor: "#f1f1f1",
+                borderWidth: 2
+            });
 
-                var infowindow = new naver.maps.InfoWindow({
-                    content: '<div class="marker-label">' + place.title + '</div>'
-                });
-
-                naver.maps.Event.addListener(marker, 'click', function(e) {
-                    infowindow.open(map, marker);
-                });
+            naver.maps.Event.addListener(marker, "click", function() {
+                if (currentInfowindow) {
+                    currentInfowindow.close();
+                }
+                infowindow.open(map, marker);
+                currentInfowindow = infowindow;
             });
         });
     </script>
-</head>
-<body>
-    <div id="map"></div>
 </body>
 </html>
