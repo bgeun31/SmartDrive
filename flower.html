@@ -4,19 +4,168 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <title>간단한 지도 표시하기</title>
+    <title>서울 꽃나들이 장소</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=3n3v7ntkle"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
-<div id="map" style="width:100%;height:400px;"></div>
+    <div id="map"></div>
 
-<script>
-var mapOptions = {
-    center: new naver.maps.LatLng(37.3595704, 127.105399),
-    zoom: 10
-};
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script>
+        var mapOptions = {
+            center: new naver.maps.LatLng(37.5665, 126.9780),
+            zoom: 12
+        };
+        var map = new naver.maps.Map('map', mapOptions);
 
-var map = new naver.maps.Map('map', mapOptions);
-</script>
+        var places = {
+            "서울숲": {latlng: new naver.maps.LatLng(37.544579, 127.037649), img: "image/서울숲.jpeg", desc: "서울숲은 다양한 꽃과 나무가 있는 아름다운 공원입니다."},
+            "남산공원": {latlng: new naver.maps.LatLng(37.5511694, 126.9882266), img: "image/남산공원.jpeg", desc: "남산공원은 서울을 한눈에 볼 수 있는 멋진 장소입니다."},
+            "올림픽공원": {latlng: new naver.maps.LatLng(37.516436, 127.115046), img: "image/올림픽공원.jpeg", desc: "올림픽공원은 다양한 꽃과 예술작품이 있는 넓은공원입니다."},
+            "경복궁": {latlng: new naver.maps.LatLng(37.579617, 126.977041), img: "image/경복궁.jpeg", desc: "경복궁은 역사적인 장소로, 아름다운 꽃 정원이 있습니다."}
+        };
+
+        var currentInfowindow = null; // 현재 열려 있는 인포윈도우
+        var currentPolyline = null;   // 현재 표시된 폴리라인
+        var currentMarker = null;     // 현재 위치 마커
+
+        // 현재 위치 가져오기 및 표시
+        function showCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var currentLocation = new naver.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+                    if (currentMarker) {
+                        currentMarker.setMap(null);
+                    }
+
+                    currentMarker = new naver.maps.Marker({
+                        position: currentLocation,
+                        map: map,
+                        icon: {
+                            content: '<div style="background-color: red; width: 20px; height: 20px; border-radius: 50%;"></div>',
+                            anchor: new naver.maps.Point(10, 10)
+                        }
+                    });
+
+                    map.setCenter(currentLocation);
+                }, function(error) {
+                    console.error("Error Code = " + error.code + " - " + error.message);
+                });
+            } else {
+                alert("Geolocation을 지원하지 않습니다.");
+            }
+        }
+
+        function showRouteToPlace(placeName) {
+            var place = places[placeName];
+            var currentLocation = map.getCenter();
+
+            axios.get(`https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving`, {
+                params: {
+                    start: `${currentLocation.lng()},${currentLocation.lat()}`,
+                    goal: `${place.latlng.lng()},${place.latlng.lat()}`,
+                    option: "trafast"
+                },
+                headers: {
+                    'X-NCP-APIGW-API-KEY-ID': '3n3v7ntkle',
+                    'X-NCP-APIGW-API-KEY': 'c9xc0vQECxIbZS0s4Fh2DoYXfxHXV1dCPpKlsTig'
+                }
+            })
+            .then(response => {
+                if (response.data.route && response.data.route.trafast) {
+                    var route = response.data.route.trafast[0].path;
+                    var path = route.map(coord => new naver.maps.LatLng(coord[1], coord[0]));
+
+                    if (currentPolyline) {
+                        currentPolyline.setMap(null); // 이전 경로 제거
+                    }
+
+                    currentPolyline = new naver.maps.Polyline({
+                        map: map,
+                        path: path,
+                        strokeColor: '#00FF00',
+                        strokeWeight: 5
+                    });
+
+                    var infoContent = `
+                        <div>
+                            <h4>${placeName}</h4>
+                            <p>예상 시간: ${Math.floor(response.data.route.trafast[0].summary.duration / 60)}분</p>
+                        </div>
+                    `;
+
+                    if (currentInfowindow) {
+                        currentInfowindow.close();
+                    }
+
+                    var infowindow = new naver.maps.InfoWindow({
+                        content: infoContent,
+                        maxWidth: 200,
+                        borderColor: "#f1f1f1",
+                        borderWidth: 2,
+                        position: place.latlng
+                    });
+
+                    infowindow.open(map);
+                    currentInfowindow = infowindow;
+                } else {
+                    console.error("경로 데이터를 찾을 수 없습니다.");
+                }
+            })
+            .catch(error => {
+                console.error("경로 요청 실패:", error);
+            });
+        }
+
+        Object.keys(places).forEach(placeName => {
+            var place = places[placeName];
+            var marker = new naver.maps.Marker({
+                map: map,
+                position: place.latlng,
+                title: placeName
+            });
+
+            var contentString = `
+                <div style="width:200px;text-align:center;">
+                    <h4>${placeName}</h4>
+                    <img src="${place.img}" alt="${placeName}" style="width:100%;height:auto;">
+                    <p>${place.desc}</p>
+                    <button onclick="showRouteToPlace('${placeName}')">경로 보기</button>
+                </div>
+            `;
+
+            var infowindow = new naver.maps.InfoWindow({
+                content: contentString,
+                maxWidth: 200,
+                borderColor: "#f1f1f1",
+                borderWidth: 2
+            });
+
+            naver.maps.Event.addListener(marker, "click", function() {
+                if (currentInfowindow) {
+                    currentInfowindow.close();
+                }
+                infowindow.open(map, marker);
+                currentInfowindow = infowindow;
+            });
+        });
+
+        // 페이지 로드 시 현재 위치 표시
+        window.onload = function() {
+            showCurrentLocation();
+        };
+    </script>
 </body>
 </html>
