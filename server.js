@@ -181,6 +181,7 @@ app.post('/api/posts', upload.single('image'), function(req, res) {
   });
 });
 
+// 날씨 api
 async function getWeatherData() {
   const now = new Date();
   const year = now.getFullYear();
