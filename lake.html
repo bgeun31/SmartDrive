@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <title>서울 공원 드라이브 장소</title>
+    <title>서울 호수 드라이브 장소</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=3n3v7ntkle"></script>
     <style>
         body {
@@ -30,14 +30,43 @@
         var map = new naver.maps.Map('map', mapOptions);
 
         var places = {
-            "어린이대공원": {latlng: new naver.maps.LatLng(37.548014, 127.074576), img: "image/어린이대공원.jpeg", desc: "어린이대공원은 다양한 놀이 시설과 자연이 어우러진 공원입니다."},
-            "양재시민의숲": {latlng: new naver.maps.LatLng(37.470314, 127.038366), img: "image/양재시민의숲.jpeg", desc: "양재시민의숲은 다양한 수목과 산책로가 있는 공원입니다."},
-            "남산도시숲": {latlng: new naver.maps.LatLng(37.550759, 126.990902), img: "image/남산도시숲.jpeg", desc: "남산도시숲은 서울 도심 속 자연을 만끽할 수 있는 곳입니다."},
-            "서울숲공원": {latlng: new naver.maps.LatLng(37.544552, 127.037665), img: "image/서울숲공원.jpeg", desc: "서울숲공원은 도심 속에서 자연을 즐길 수 있는 큰 공원입니다."}
+            "석촌호수": {latlng: new naver.maps.LatLng(37.5110, 127.0984), img: "image/석촌호수.jpeg", desc: "석촌호수는 아름다운 호수와 함께 산책하기 좋은 장소입니다."},
+            "뚝섬유원지": {latlng: new naver.maps.LatLng(37.5302, 127.0668), img: "image/뚝섬유원지.jpeg", desc: "뚝섬유원지는 한강을 따라 즐길 수 있는 멋진 장소입니다."},
+            "일산호수공원": {latlng: new naver.maps.LatLng(37.6760, 126.7467), img: "image/일산호수공원.jpeg", desc: "일산호수공원은 넓은 호수와 다양한 꽃들을 볼 수 있는 곳입니다."},
+            "한강시민공원": {latlng: new naver.maps.LatLng(37.5404, 126.9880), img: "image/한강시민공원.jpeg", desc: "한강시민공원은 한강을 따라 드라이브하기 좋은 장소입니다."}
         };
 
         var currentInfowindow = null; // 현재 열려 있는 인포윈도우
         var currentPolyline = null;   // 현재 표시된 폴리라인
+        var currentMarker = null;     // 현재 위치 마커
+
+        // 현재 위치 가져오기 및 표시
+        function showCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var currentLocation = new naver.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+                    if (currentMarker) {
+                        currentMarker.setMap(null);
+                    }
+
+                    currentMarker = new naver.maps.Marker({
+                        position: currentLocation,
+                        map: map,
+                        icon: {
+                            content: '<div style="background-color: red; width: 20px; height: 20px; border-radius: 50%;"></div>',
+                            anchor: new naver.maps.Point(10, 10)
+                        }
+                    });
+
+                    map.setCenter(currentLocation);
+                }, function(error) {
+                    console.error("Error Code = " + error.code + " - " + error.message);
+                });
+            } else {
+                alert("Geolocation을 지원하지 않습니다.");
+            }
+        }
 
         function showRouteToPlace(placeName) {
             var place = places[placeName];
@@ -133,9 +162,9 @@
             });
         });
 
-        // 페이지 로드 시 지도 초기화
+        // 페이지 로드 시 현재 위치 표시
         window.onload = function() {
-            map.setCenter(new naver.maps.LatLng(37.5665, 126.9780));
+            showCurrentLocation();
         };
     </script>
 </body>

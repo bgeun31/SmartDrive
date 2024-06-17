@@ -2,9 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible"="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <title>서울 공원 드라이브 장소</title>
+    <title>서울 야경 드라이브 장소</title>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=3n3v7ntkle"></script>
     <style>
         body {
@@ -30,10 +30,10 @@
         var map = new naver.maps.Map('map', mapOptions);
 
         var places = {
-            "어린이대공원": {latlng: new naver.maps.LatLng(37.548014, 127.074576), img: "image/어린이대공원.jpeg", desc: "어린이대공원은 다양한 놀이 시설과 자연이 어우러진 공원입니다."},
-            "양재시민의숲": {latlng: new naver.maps.LatLng(37.470314, 127.038366), img: "image/양재시민의숲.jpeg", desc: "양재시민의숲은 다양한 수목과 산책로가 있는 공원입니다."},
-            "남산도시숲": {latlng: new naver.maps.LatLng(37.550759, 126.990902), img: "image/남산도시숲.jpeg", desc: "남산도시숲은 서울 도심 속 자연을 만끽할 수 있는 곳입니다."},
-            "서울숲공원": {latlng: new naver.maps.LatLng(37.544552, 127.037665), img: "image/서울숲공원.jpeg", desc: "서울숲공원은 도심 속에서 자연을 즐길 수 있는 큰 공원입니다."}
+            "광화문": {latlng: new naver.maps.LatLng(37.575936, 126.976849), img: "image/광화문.jpeg", desc: "광화문은 서울의 중심부에 위치한 역사적인 명소로, 멋진 야경을 자랑합니다."},
+            "한강대교": {latlng: new naver.maps.LatLng(37.531100, 126.965800), img: "image/한강대교.jpeg", desc: "한강대교는 한강의 멋진 야경을 볼 수 있는 장소입니다."},
+            "남산서울타워": {latlng: new naver.maps.LatLng(37.551169, 126.988227), img: "image/남산서울타워.jpeg", desc: "남산서울타워는 서울의 대표적인 야경 명소입니다."},
+            "동대문디자인플라자(DDP)": {latlng: new naver.maps.LatLng(37.5665, 127.0090), img: "image/DDP.jpeg", desc: "동대문디자인플라자는 독특한 건축물과 야경을 즐길 수 있는 장소입니다."}
         };
 
         var currentInfowindow = null; // 현재 열려 있는 인포윈도우
@@ -132,11 +132,6 @@
                 currentInfowindow = infowindow;
             });
         });
-
-        // 페이지 로드 시 지도 초기화
-        window.onload = function() {
-            map.setCenter(new naver.maps.LatLng(37.5665, 126.9780));
-        };
     </script>
 </body>
 </html>
