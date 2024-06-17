@@ -11,6 +11,12 @@ const axios = require('axios');
 
 dotenv.config(); // 가장 먼저 환경 변수를 로드
 
+var xml2js = require('xml2js');
+
+var url = 'http://openapi.seoul.go.kr:8088/6c6d6f786673736b383449504f536a/xml/AccInfo/1/5/';
+
+
+
 // MySQL 연결 설정
 const db = mysql.createConnection({
   host: 'localhost',
@@ -222,7 +228,6 @@ async function getWeatherData() {
   }
 }
 
-
 // 날씨 정보 API
 app.get('/api/weather', async function(req, res) {
   const weatherData = await getWeatherData();
@@ -230,6 +235,52 @@ app.get('/api/weather', async function(req, res) {
     res.json(weatherData);
   } else {
     res.status(500).json({ error: '날씨 정보를 가져오는 데 실패했습니다.' });
+  }
+});
+
+// 서울 실시간 돌발 상황 api
+async function getSeoulAccInfo(start = 1, end = 10) {
+  const url = `http://openapi.seoul.go.kr:8088/6c6d6f786673736b383449504f536a/xml/AccInfo/${start}/${end}/`;
+
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('API 호출 중 오류 발생:', error);
+    return null;
+  }
+}
+
+app.get('/api/data', async function(req, res) {
+  try {
+    const data = await getSeoulAccInfo();
+    xml2js.parseString(data, (err, result) => {
+      if (err) {
+        res.status(500).send('Error occurred while parsing data');
+      } else {
+        if (result.AccInfo.list_total_count && result.AccInfo.row) {
+          const rows = result.AccInfo.row.map(acc => ({
+            acc_id: acc.acc_id[0],
+            occr_date: acc.occr_date[0],
+            occr_time: acc.occr_time[0],
+            exp_clr_date: acc.exp_clr_date[0],
+            exp_clr_time: acc.exp_clr_time[0],
+            acc_type: acc.acc_type[0],
+            acc_dtype: acc.acc_dtype[0],
+            link_id: acc.link_id[0],
+            grs80tm_x: parseFloat(acc.grs80tm_x[0]),
+            grs80tm_y: parseFloat(acc.grs80tm_y[0]),
+            acc_info: acc.acc_info[0],
+            acc_road_code: acc.acc_road_code[0]
+          }));
+          res.json(rows);
+        } else {
+          res.json([]);
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).send('Error occurred while fetching data');
   }
 });
 
