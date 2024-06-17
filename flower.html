@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -21,7 +22,8 @@
             transition: width 0.3s;
         }
 
-        #sidebar, #weather-sidebar {
+        #sidebar,
+        #weather-sidebar {
             width: 300px;
             height: 100vh;
             background-color: #f4f4f4;
@@ -33,11 +35,13 @@
             z-index: 1000;
         }
 
-        #sidebar.open, #weather-sidebar.open {
+        #sidebar.open,
+        #weather-sidebar.open {
             right: 0;
         }
 
-        #toggle-button, #weather-button {
+        #toggle-button,
+        #weather-button {
             position: absolute;
             top: 20px;
             z-index: 1001;
@@ -339,9 +343,11 @@
         }
 
         function convertCoords(x, y) {
-            const firstProjection = '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs';
+            const firstProjection = '+proj=tmerc +lat_0=38 +lon_0=127.00289027777778 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs';
             const secondProjection = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs';
-            return proj4(firstProjection, secondProjection, [x, y]);
+            const result = proj4(firstProjection, secondProjection, [x, y]);
+            console.log(`Converted coordinates for (${x}, ${y}): ${result[0]}, ${result[1]}`); // 변환된 좌표를 로그로 출력
+            return result;
         }
 
         function formatAccInfo(info) {
@@ -360,6 +366,8 @@
                     console.error(`Invalid coordinates for acc_id: ${acc.acc_id}`);
                     return;
                 }
+                console.log(`Adding marker at coordinates: (${lat}, ${lon}) for acc_id: ${acc.acc_id}`); // 마커 좌표를 로그로 출력
+
 
                 const formattedAccInfo = formatAccInfo(acc.acc_info);
                 const occrDateTime = formatDateTime(acc.occr_date, acc.occr_time);
@@ -407,4 +415,5 @@
         });
     </script>
 </body>
+
 </html>
