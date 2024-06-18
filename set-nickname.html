@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="kr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>닉네임 설정</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .nickname-container {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .nickname-container h1 {
+            margin-bottom: 1rem;
+        }
+
+        .nickname-container input {
+            padding: 0.5rem;
+            font-size: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .nickname-container button {
+            background-color: #1ec800;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .nickname-container button:hover {
+            background-color: #199d00;
+        }
+
+        .message {
+            font-size: 0.9rem;
+            color: #ff4500;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nickname-container">
+        <h1>닉네임 설정</h1>
+        <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
+        <button onclick="checkNickname()">중복 확인</button>
+        <div class="message" id="message"></div>
+        <button onclick="setNickname()">닉네임 설정</button>
+    </div>
+
+    <script>
+        async function checkNickname() {
+            const nickname = document.getElementById('nickname').value;
+            if (nickname) {
+                try {
+                    const response = await fetch('/api/check-nickname', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ nickname })
+                    });
+                    const data = await response.json();
+                    const messageElement = document.getElementById('message');
+                    if (data.exists) {
+                        messageElement.textContent = '이미 사용 중인 닉네임입니다.';
+                    } else {
+                        messageElement.textContent = '사용할 수 있는 닉네임입니다.';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('닉네임 중복 확인 중 오류가 발생했습니다.');
+                }
+            } else {
+                alert('닉네임을 입력해주세요.');
+            }
+        }
+
+        async function setNickname() {
+            const nickname = document.getElementById('nickname').value;
+            if (nickname) {
+                try {
+                    const response = await fetch('/api/set-nickname', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ nickname })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('닉네임 설정 완료:', nickname);
+                        alert('닉네임 설정이 완료되었습니다.');
+                        // 닉네임 설정 완료 후 리다이렉트
+                        window.location.href = '/'; // 홈 페이지로 이동
+                    } else {
+                        alert('닉네임 설정 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('서버와의 통신 중 오류가 발생했습니다.');
+                }
+            } else {
+                alert('닉네임을 입력해주세요.');
+            }
+        }
+    </script>
+</body>
+
+</html>

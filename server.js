@@ -14,6 +14,7 @@ dotenv.config();
 
 var xml2js = require('xml2js');
 
+// MySQL 연결 설정
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
@@ -22,10 +23,14 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-  if (err) throw err;
+  if (err) {
+    console.error('MySQL 연결 오류:', err);
+    throw err;
+  }
   console.log('MySQL Connected...');
 });
 
+// Passport 설정
 passport.use(new NaverStrategy({
   clientID: process.env.NAVER_CLIENT_ID,
   clientSecret: process.env.NAVER_CLIENT_SECRET,
@@ -49,19 +54,25 @@ function(accessToken, refreshToken, profile, done) {
 
 const app = express();
 
+app.use(express.json()); // JSON 본문 파싱
+
 app.use(cors());
 
+// 세션 설정
 app.use(session({
   secret: 'd3MHfBcvbO',
   resave: false,
   saveUninitialized: true
 }));
 
+// Passport 초기화
 app.use(passport.initialize());
 app.use(passport.session());
 
+// 정적 파일 제공
 app.use(express.static(path.join(__dirname)));
 
+// Passport 시리얼라이즈 설정
 passport.serializeUser(function(user, done) {
   done(null, user);
 });
@@ -70,6 +81,7 @@ passport.deserializeUser(function(obj, done) {
   done(null, obj);
 });
 
+// multer 설정
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, 'uploads/');
@@ -81,10 +93,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// 업로드 디렉토리 생성
 if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
+// 네이버 로그인 라우트
 app.get('/auth/naver',
   passport.authenticate('naver'));
 
@@ -92,16 +106,25 @@ app.get('/auth/naver/callback',
   passport.authenticate('naver', { failureRedirect: '/' }),
   function(req, res) {
     req.session.favorites = req.user.favorites || [];
-    res.redirect('/');
+    if (!req.user.nickname) {
+      res.redirect('/set-nickname.html'); // 닉네임 설정 페이지로 리디렉션
+    } else {
+      res.redirect('/'); // 메인 페이지로 리디렉션
+    }
   });
 
+// 로그아웃 라우트
 app.get('/logout', function(req, res) {
   req.logout(function(err) {
-    if (err) { return next(err); }
+    if (err) {
+      console.error('로그아웃 오류:', err);
+      return res.status(500).json({ error: '로그아웃 도중 오류가 발생했습니다.' });
+    }
     res.redirect('/');
   });
 });
 
+// 인증 상태 체크 미들웨어
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -118,6 +141,7 @@ app.get('/isAuthenticated', (req, res) => {
   }
 });
 
+// 기본 라우트 설정
 app.get('/', function(req, res) {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -142,16 +166,126 @@ app.get('/community', isAuthenticated, function(req, res) {
   res.sendFile(path.join(__dirname, 'community.html'));
 });
 
+app.get('/isAuthenticated', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (req.isAuthenticated()) {
+        res.json({ isAuthenticated: true, user: req.user });
+    } else {
+        res.json({ isAuthenticated: false });
+    }
+});
+
+app.post('/api/posts', upload.single('image'), (req, res) => {
+    const { title, author, content } = req.body;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const sql = "INSERT INTO posts (title, author, content, image_url) VALUES (?, ?, ?, ?)";
+    db.query(sql, [title, author, content, imageUrl], (err, result) => {
+        if (err) {
+            console.error('게시물 저장 오류:', err);
+            return res.status(500).json({ success: false, error: '게시물 저장 중 오류가 발생했습니다.' });
+        }
+        res.json({ success: true, post: { id: result.insertId, title, author, content, image_url: imageUrl, likes: 0 } });
+    });
+});
+
+// 게시물 댓글 추가 API
+app.post('/api/posts/:id/comment', (req, res) => {
+  const postId = req.params.id;
+  const { author, comment } = req.body;
+
+  if (!author || !comment) {
+      return res.status(400).json({ success: false, error: '작성자와 댓글 내용을 모두 입력해 주세요.' });
+  }
+
+  const sql = "INSERT INTO comments (post_id, author, comment) VALUES (?, ?, ?)";
+  db.query(sql, [postId, author, comment], (err, result) => {
+      if (err) {
+          console.error('댓글 저장 오류:', err);
+          return res.status(500).json({ success: false, error: '댓글 저장 중 오류가 발생했습니다.' });
+      }
+      res.json({ success: true, comment: { id: result.insertId, author, comment } });
+  });
+});
+
+app.get('/api/posts/:postId/comments', (req, res) => {
+  const postId = req.params.postId;
+  const query = 'SELECT author, comment FROM comments WHERE post_id = ?';
+  
+  db.query(query, [postId], (error, results) => {
+      if (error) {
+          console.error('Error fetching comments:', error);
+          res.status(500).json({ error: 'Error fetching comments' });
+      } else {
+          res.json(results);
+      }
+  });
+});
+
+// 닉네임 설정 API
+
+// 닉네임 중복 확인 엔드포인트
+app.post('/api/check-nickname', (req, res) => {
+    const { nickname } = req.body;
+    if (!nickname) {
+      return res.status(400).json({ error: '닉네임을 입력해주세요.' });
+  }
+  
+  const sql = "SELECT * FROM users WHERE nickname = ?";
+  db.query(sql, [nickname], (err, results) => {
+      if (err) {
+          console.error('닉네임 중복 확인 오류:', err);
+          return res.status(500).json({ error: '서버 오류로 인해 닉네임을 확인할 수 없습니다.' });
+      }
+  
+      if (results.length > 0) {
+          res.json({ exists: true });
+      } else {
+          res.json({ exists: false });
+      }
+  });
+  
+});
+
+// 닉네임 설정 엔드포인트
+app.post('/api/set-nickname', (req, res) => {
+  const { nickname } = req.body;
+
+  if (!nickname) {
+      return res.status(400).json({ success: false, error: '닉네임을 입력해주세요.' });
+  }
+
+  const sql = "UPDATE users SET nickname = ? WHERE naver_id = ?";
+  db.query(sql, [nickname, req.user.id], (err, results) => {
+      if (err) {
+          console.error('닉네임 저장 오류:', err);
+          return res.status(500).json({ success: false, error: '닉네임을 저장하는 도중 오류가 발생했습니다.' });
+      }
+
+        console.log('닉네임 설정 완료:', nickname);
+      req.user.nickname = nickname; // 세션 사용자 정보 업데이트
+      res.json({ success: true });
+  });
+});
+
+// 인기 게시물 API
 app.get('/api/popular-posts', function(req, res) {
   db.query('SELECT * FROM posts ORDER BY likes DESC, created_at DESC LIMIT 3', function(err, results) {
-    if (err) throw err;
+    if (err) {
+      console.error('인기 게시물 조회 오류:', err);
+      return res.status(500).json({ error: '인기 게시물을 가져오는 도중 오류가 발생했습니다.' });
+    }
     res.json(results);
   });
 });
 
+// 일반 게시물 API
 app.get('/api/posts', function(req, res) {
   db.query('SELECT * FROM posts ORDER BY created_at DESC', function(err, results) {
-    if (err) throw err;
+    if (err) {
+      console.error('게시물 조회 오류:', err);
+      return res.status(500).json({ error: '게시물을 가져오는 도중 오류가 발생했습니다.' });
+    }
     res.json(results);
   });
 });
@@ -160,37 +294,37 @@ app.get('/api/posts', function(req, res) {
 app.get('/api/posts/:id', function(req, res) {
   const postId = req.params.id;
   db.query('SELECT * FROM posts WHERE id = ?', [postId], function(err, results) {
-    if (err) throw err;
+    if (err) {
+      console.error('게시물 조회 오류:', err);
+      return res.status(500).json({ error: '게시물을 가져오는 도중 오류가 발생했습니다.' });
+    }
     if (results.length > 0) {
       res.json(results[0]);
     } else {
-      res.status(404).json({ error: 'Post not found' });
+      res.status(404).json({ error: '게시물을 찾을 수 없습니다.' });
     }
   });
 });
 
-app.post('/api/posts/:id/like', function(req, res) {
+// 좋아요 추가 API
+app.post('/api/posts/:id/like', isAuthenticated, function(req, res) {
   const postId = req.params.id;
-  db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId], function(err, result) {
-    if (err) throw err;
-    db.query('SELECT likes FROM posts WHERE id = ?', [postId], function(err, results) {
-      if (err) throw err;
-      res.json({ success: true, likes: results[0].likes });
-    });
+  db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId], function(err, results) {
+    if (err) {
+      console.error('좋아요 추가 오류:', err);
+      return res.status(500).json({ error: '좋아요 추가 중 오류가 발생했습니다.' });
+    }
+    res.json({ success: true });
   });
 });
 
-app.post('/api/posts', upload.single('image'), function(req, res) {
-  const { title, author, content } = req.body;
-  const imageUrl = req.file ? '/uploads/' + req.file.filename : null;
-  console.log('Received post data:', { title, author, content, imageUrl });
-  
-  db.query('INSERT INTO posts (title, author, content, image_url, likes) VALUES (?, ?, ?, ?, 0)', 
-    [title, author, content, imageUrl], function(err, result) {
+// 좋아요 제거 API
+app.post('/api/posts/:id/unlike', isAuthenticated, function(req, res) {
+  const postId = req.params.id;
+  db.query('UPDATE posts SET likes = likes - 1 WHERE id = ?', [postId], function(err, results) {
     if (err) {
-      console.error('Error inserting post:', err);
-      res.json({ success: false, error: 'Error inserting post' });
-      return;
+      console.error('좋아요 제거 오류:', err);
+      return res.status(500).json({ error: '좋아요 제거 중 오류가 발생했습니다.' });
     }
     res.json({ success: true });
   });
