@@ -36,39 +36,124 @@
             height: 20px;
             margin-bottom: 5px;
         }
+        .comment-form {
+            background-color: #f9f9f9;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            margin-right: 4px;
+            align-items: center;
+            text-align: center;
+        }
+        .comment-form textarea {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            min-height: 150px;
+        }
+        .comment-form button {
+            background-color: #1ec800;
+            color: white;
+            padding: 0.75rem 4rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .comment-list {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .comment {
+            margin-bottom: 1rem;
+        }
+        .comment p {
+            margin: 0.5rem 0;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const postId = urlParams.get('id');
-            console.log('Post ID:', postId); // 디버깅을 위해 추가
+            console.log('Post ID:', postId);
             loadPostDetails(postId);
+
+            checkAndSetNickname();
         });
+
+        function checkAndSetNickname() {
+            fetch('/isAuthenticated')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.isAuthenticated) {
+                        localStorage.setItem('nickname', data.user.nickname);
+                    } else {
+                        alert('로그인이 필요합니다.');
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking authentication:', error);
+                    alert('인증 상태를 확인하는 중 오류가 발생했습니다.');
+                });
+        }
 
         function loadPostDetails(postId) {
             fetch(`/api/posts/${postId}`)
                 .then(response => response.json())
                 .then(post => {
-                    console.log('Post details:', post); // 디버깅을 위해 추가
+                    console.log('Post details:', post);
                     const postContainer = document.getElementById('postContainer');
                     if (post.error) {
                         postContainer.innerHTML = `<p>게시글을 찾을 수 없습니다.</p>`;
                     } else {
                         postContainer.innerHTML = `
-                            <h2>${post.title}</h2>
-                            <p><strong>작성자:</strong> ${post.author}</p>
-                            <p>${post.content}</p>
-                            ${post.image_url ? `<img src="${post.image_url}" alt="Post image" style="max-width:100%;">` : ''}
-                            <div class="like-button" onclick="likePost(${post.id})">
-                                <img src="/image/like.png" alt="Like">
-                                <span id="likeCount">${post.likes}</span>
+                            <div class="post">
+                                <h2>${post.title}</h2>
+                                <p><strong>작성자:</strong> ${post.author}</p>
+                                <p>${post.content}</p>
+                                ${post.image_url ? `<img src="${post.image_url}" alt="Post image" style="max-width:100%;">` : ''}
+                                <div class="like-button" onclick="likePost(${post.id})">
+                                    <img src="/image/like.png" alt="Like">
+                                    <span id="likeCount">${post.likes}</span>
+                                </div>
                             </div>
+                            <div class="comment-form">
+                                <textarea id="commentText" placeholder="댓글을 작성하세요"></textarea>
+                                <button onclick="submitComment(${postId})">작성</button>
+                            </div>
+                            <div class="comment-list" id="commentList"></div>
                         `;
+                        loadComments(post.id);
                     }
                 })
                 .catch(error => {
                     console.error('Error loading post details:', error);
                     document.getElementById('postContainer').innerHTML = `<p>게시글을 불러오는 중 오류가 발생했습니다.</p>`;
+                });
+        }
+
+        function loadComments(postId) {
+            fetch(`/api/posts/${postId}/comments`)
+                .then(response => response.json())
+                .then(comments => {
+                    console.log('Comments:', comments);
+                    const commentList = document.getElementById('commentList');
+                    commentList.innerHTML = comments.map(comment => `
+                        <div class="comment">
+                            <p><strong>${comment.author}</strong></p>
+                            <p>${comment.comment}</p>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error loading comments:', error);
+                    document.getElementById('commentList').innerHTML = `<p>댓글을 불러오는 중 오류가 발생했습니다.</p>`;
                 });
         }
 
@@ -90,11 +175,47 @@
                 alert('An error occurred while liking the post.');
             });
         }
+
+        function submitComment(postId) {
+            const commentText = document.getElementById('commentText').value;
+            const author = localStorage.getItem('nickname');
+
+            if (!author) {
+                alert('닉네임이 설정되지 않았습니다. 닉네임을 설정해 주세요.');
+                return;
+            }
+
+            fetch(`/api/posts/${postId}/comment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ author, comment: commentText })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    console.log('댓글 작성 완료:', data.comment);
+                    document.getElementById('commentText').value = '';  // 댓글 작성 후 입력란 초기화
+                    loadComments(postId);
+                } else {
+                    alert('댓글 작성에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('댓글 작성 오류:', error);
+                alert('댓글 작성 중 오류가 발생했습니다.');
+            });
+        }
     </script>
 </head>
 <body>
     <div class="container">
-        <div id="postContainer" class="post"></div>
+        <div id="postContainer"></div>
     </div>
 </body>
 </html>

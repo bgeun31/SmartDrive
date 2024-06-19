@@ -175,6 +175,66 @@ app.get('/isAuthenticated', (req, res) => {
     }
 });
 
+
+
+
+
+
+// GET endpoint to fetch drive posts
+app.get('/api/drive-posts', (req, res) => {
+  const query = 'SELECT * FROM drive_posts';
+  db.query(query, (err, results) => {
+      if (err) {
+          console.error('Error fetching drive posts:', err);
+          res.status(500).json({ success: false, error: 'Failed to fetch drive posts' });
+      } else {
+          res.status(200).json({ success: true, posts: results });
+      }
+  });
+});
+
+// POST endpoint to add a drive post
+app.post('/api/drive-posts', (req, res) => {
+  const { nickname, gender, age, description } = req.body;
+  const insertQuery = 'INSERT INTO drive_posts (nickname, gender, age, description) VALUES (?, ?, ?, ?)';
+  const values = [nickname, gender, age, description];
+  db.query(insertQuery, values, (err, result) => {
+      if (err) {
+          console.error('Error inserting drive post:', err);
+          res.status(500).json({ success: false, error: 'Failed to insert drive post' });
+      } else {
+          res.status(201).json({ success: true, message: 'Drive post inserted successfully' });
+      }
+  });
+});
+
+
+
+
+// 게시물 댓글 추가 API
+app.post('/api/drive-posts/:id/comment', (req, res) => {
+  const postId = req.params.id;
+  const { author, comment } = req.body;
+
+  if (!author || !comment) {
+      return res.status(400).json({ success: false, error: '작성자와 댓글 내용을 모두 입력해 주세요.' });
+  }
+
+  const sql = "INSERT INTO drive_post_comments (post_id, author, comment) VALUES (?, ?, ?)";
+  db.query(sql, [postId, author, comment], (err, result) => {
+      if (err) {
+          console.error('댓글 저장 오류:', err);
+          return res.status(500).json({ success: false, error: '댓글 저장 중 오류가 발생했습니다.' });
+      }
+      res.json({ success: true, comment: { id: result.insertId, author, comment } });
+  });
+});
+
+
+
+
+
+
 app.post('/api/posts', upload.single('image'), (req, res) => {
     const { title, author, content } = req.body;
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -306,29 +366,30 @@ app.get('/api/posts/:id', function(req, res) {
   });
 });
 
+
 // 좋아요 추가 API
 app.post('/api/posts/:id/like', isAuthenticated, function(req, res) {
   const postId = req.params.id;
   db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId], function(err, results) {
-    if (err) {
-      console.error('좋아요 추가 오류:', err);
-      return res.status(500).json({ error: '좋아요 추가 중 오류가 발생했습니다.' });
-    }
-    res.json({ success: true });
+      if (err) {
+          console.error('좋아요 추가 오류:', err);
+          return res.status(500).json({ error: '좋아요 추가 중 오류가 발생했습니다.' });
+      }
+      res.json({ success: true });
   });
 });
 
-// 좋아요 제거 API
 app.post('/api/posts/:id/unlike', isAuthenticated, function(req, res) {
   const postId = req.params.id;
   db.query('UPDATE posts SET likes = likes - 1 WHERE id = ?', [postId], function(err, results) {
-    if (err) {
-      console.error('좋아요 제거 오류:', err);
-      return res.status(500).json({ error: '좋아요 제거 중 오류가 발생했습니다.' });
-    }
-    res.json({ success: true });
+      if (err) {
+          console.error('좋아요 제거 오류:', err);
+          return res.status(500).json({ error: '좋아요 제거 중 오류가 발생했습니다.' });
+      }
+      res.json({ success: true });
   });
 });
+
 
 async function getWeatherData() {
   const now = new Date();
