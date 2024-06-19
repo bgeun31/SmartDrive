@@ -300,12 +300,6 @@
                 map: map,
                 position: place.latlng,
                 title: placeName,
-                icon: {
-                        url: 'https://png.pngtree.com/png-vector/20190418/ourmid/pngtree-vector-location-icon-png-image_951300.jpg',
-                        size: new naver.maps.Size(32, 32),
-                        origin: new naver.maps.Point(0, 0),
-                        anchor: new naver.maps.Point(16, 32)
-                    }
             });
 
             var contentString = `
@@ -339,13 +333,7 @@
                     new naver.maps.Marker({
                         map: map,
                         position: userLocation,
-                        title: '현재 위치',
-                        icon: {
-                        url: 'https://png.pngtree.com/png-vector/20190418/ourmid/pngtree-vector-location-icon-png-image_951300.jpg',
-                        size: new naver.maps.Size(32, 32),
-                        origin: new naver.maps.Point(0, 0),
-                        anchor: new naver.maps.Point(16, 32)
-                    }
+                        title: '현재 위치'
                     });
                     map.setCenter(userLocation);
                 }, function(error) {
@@ -432,7 +420,6 @@
         fetchData().then(data => {
             initMapWithAccidents(data);
         });
-
         getUserLocation();
     </script>
 </body>
