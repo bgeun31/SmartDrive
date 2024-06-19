@@ -42,6 +42,43 @@
             bottom: 0;
             width: 100%;
         }
+        form {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+        }
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .comment-form {
+            margin-top: 1rem;
+        }
+        .comment-list {
+            margin-top: 1rem;
+            padding-left: 1rem;
+        }
+        .comment {
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -49,21 +86,204 @@
         <h1>Drive Companion</h1>
     </header>
     <div class="container">
-        <div class="companion-post">
-            <h3>남성 30대</h3>
-            <p>서울에서 출발해서 강릉까지 드라이브 하실 분 구합니다.</p>
-        </div>
-        <div class="companion-post">
-            <h3>여성 20대</h3>
-            <p>주말에 부산 해안도로 드라이브 함께 하실 분 찾아요!</p>
-        </div>
-        <div class="companion-post">
-            <h3>남성 20대</h3>
-            <p>춘천에서 남이섬까지 드라이브 동행 구해요.</p>
-        </div>
+        <h2>드라이브 동행 글 작성하기</h2>
+        <form id="companion-form">
+            <label for="nickname">닉네임:</label>
+            <input type="text" id="nickname" name="nickname" required>
+
+            <label for="gender">성별:</label>
+            <select id="gender" name="gender" required>
+                <option value="">선택하세요</option>
+                <option value="남성">남성</option>
+                <option value="여성">여성</option>
+            </select>
+
+            <label for="age">연령대:</label>
+            <select id="age" name="age" required>
+                <option value="">선택하세요</option>
+                <option value="10">10대</option>
+                <option value="20">20대</option>
+                <option value="30">30대</option>
+                <option value="40">40대</option>
+                <option value="50">50대</option>
+                <option value="60">60대</option>
+                <option value="70">70대 이상</option>
+            </select>
+
+            <label for="description">내용:</label>
+            <textarea id="description" name="description" rows="3" required></textarea>
+
+            <button type="submit">등록하기</button>
+        </form>
+        <div id="posts-container"></div>
     </div>
     <footer>
         &copy; 2024 Smart Drive. All rights reserved.
     </footer>
+
+    <script>
+window.onload = function() {
+    const form = document.getElementById('companion-form');
+    const container = document.getElementById('posts-container');
+    let nickname = '';
+
+    // 닉네임을 설정하는 부분 추가
+    const nicknameInput = document.getElementById('nickname');
+    nicknameInput.addEventListener('change', (e) => {
+        nickname = e.target.value;
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const gender = document.getElementById('gender').value;
+        const age = document.getElementById('age').value;
+        const description = document.getElementById('description').value;
+
+        const formData = {
+            nickname: nickname,
+            gender: gender,
+            age: age,
+            description: description
+        };
+
+        fetch('/api/drive-posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                loadPosts();
+                form.reset();
+            } else {
+                console.error('게시물 추가 실패:', data.error);
+                alert('게시물을 추가하는 중 오류가 발생했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('네트워크 오류:', error);
+            alert('서버와의 통신 중 문제가 발생했습니다.');
+        });
+    });
+
+    function loadPosts() {
+        fetch('/api/drive-posts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                container.innerHTML = '';
+                data.posts.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.classList.add('companion-post');
+
+                    const heading = document.createElement('h3');
+                    heading.textContent = `${post.gender} ${post.age}대 by ${post.nickname}`;
+                    postElement.appendChild(heading);
+
+                    const content = document.createElement('p');
+                    content.textContent = post.description;
+                    postElement.appendChild(content);
+
+                    const commentForm = document.createElement('form');
+                    commentForm.classList.add('comment-form');
+                    const commentInput = document.createElement('input');
+                    commentInput.type = 'text';
+                    commentInput.placeholder = '댓글 입력';
+                    commentForm.appendChild(commentInput);
+                    const commentButton = document.createElement('button');
+                    commentButton.type = 'submit';
+                    commentButton.textContent = '댓글 달기';
+                    commentForm.appendChild(commentButton);
+                    postElement.appendChild(commentForm);
+
+                    commentForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const commentText = commentInput.value;
+                        if (commentText.trim()) {
+                            fetch(`/api/drive-posts/${post.id}/comment`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ author: nickname, comment: commentText })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    loadComments(post.id, commentList);
+                                    commentInput.value = '';
+                                } else {
+                                    console.error('댓글 추가 실패:', data.error);
+                                    alert('댓글을 추가하는 중 오류가 발생했습니다.');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('네트워크 오류:', error);
+                                alert('서버와의 통신 중 문제가 발생했습니다.');
+                            });
+                        }
+                    });
+
+                    const commentList = document.createElement('ul');
+                    commentList.classList.add('comment-list');
+                    postElement.appendChild(commentList);
+
+                    container.appendChild(postElement);
+
+                    loadComments(post.id, commentList);
+                });
+            } else {
+                console.error('게시물 로드 실패:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('네트워크 오류:', error);
+        });
+    }
+
+    function loadComments(postId, commentList) {
+        fetch(`/api/drive-posts/${postId}/comments`)
+        .then(response => response.json())
+        .then(data => {
+            commentList.innerHTML = '';
+            if (data.success) {
+                data.comments.forEach(comment => {
+                    const commentElement = document.createElement('li');
+                    commentElement.textContent = `${comment.author}: ${comment.comment}`;
+                    commentList.appendChild(commentElement);
+                });
+            } else {
+                console.error('댓글 로드 실패:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('네트워크 오류:', error);
+        });
+    }
+
+    loadPosts();
+}
+
+
+
+    const formData = {
+    nickname: nickname,
+    gender: gender,
+    age: age,
+    description: description
+};
+
+
+
+    </script>
 </body>
 </html>

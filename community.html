@@ -59,16 +59,16 @@
         }
         .like-button {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 30%;
+            right: 20%;
             display: flex;
             flex-direction: column;
             align-items: center;
             cursor: pointer;
         }
         .like-button img {
-            width: 20px;
-            height: 20px;
+            width: 100px;
+            height: 100px;
             margin-bottom: 5px;
         }
         .tabs {
@@ -88,163 +88,169 @@
             background-color: #45a049;
         }
     </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            loadPopularPosts();
-            loadPosts();
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPopularPosts();
+        loadPosts();
+        toggleTab('popular');
+        setAuthorField();
+
+        document.getElementById('popular-tab').addEventListener('click', function() {
             toggleTab('popular');
-            setAuthorField();
-
-            document.getElementById('popular-tab').addEventListener('click', function() {
-                toggleTab('popular');
-            });
-
-            document.getElementById('all-tab').addEventListener('click', function() {
-                toggleTab('all');
-            });
         });
 
-        function setAuthorField() {
-            fetch('/isAuthenticated')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.isAuthenticated) {
-                        document.getElementById('authorField').value = data.user.nickname;
-                        document.getElementById('authorField').readOnly = true;
-                    } else {
-                        document.getElementById('authorField').value = '로그인 해주세요';
-                    }
-                });
-        }
+        document.getElementById('all-tab').addEventListener('click', function() {
+            toggleTab('all');
+        });
+    });
 
-        function addPost(event) {
-            event.preventDefault();
-            const form = document.getElementById('postForm');
-            const formData = new FormData(form);
-            console.log('Form Data:', formData);
+    function likePost(event, postId) {
+        event.stopPropagation(); // 이벤트 전파 방지
 
-            fetch('/api/posts', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                console.log('Response:', response);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Data:', data);
-                if (data.success) {
-                    loadPopularPosts();
-                    loadPosts();
-                    form.reset();
-                    document.getElementById('imagePreview').style.display = 'none';
+        fetch(`/api/posts/${postId}/like`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Like Data:', data);
+            if (data.success) {
+                const likeCountElement = event.currentTarget.querySelector('.like-count');
+                if (likeCountElement) {
+                    likeCountElement.textContent = parseInt(likeCountElement.textContent) + 1; // 좋아요 수 증가 처리
                 } else {
-                    alert('Error posting');
+                    console.error('Like count element not found.');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while posting.');
-            });
-        }
+            } else {
+                alert('Error liking post');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while liking the post.');
+        });
+    }
 
-        function loadPopularPosts() {
-            fetch('/api/popular-posts')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Popular Posts:', data);
-                    const popularPostsContainer = document.getElementById('popularPostsContainer');
-                    popularPostsContainer.innerHTML = '';
-                    data.forEach(post => {
-                        const postElement = createPostElement(post);
-                        popularPostsContainer.appendChild(postElement);
-                    });
-                });
-        }
-
-        function loadPosts() {
-            fetch('/api/posts')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Posts:', data);
-                    const postsContainer = document.getElementById('postsContainer');
-                    postsContainer.innerHTML = '';
-                    data.forEach(post => {
-                        const postElement = createPostElement(post);
-                        postsContainer.appendChild(postElement);
-                    });
-                });
-        }
-
-        function createPostElement(post) {
-            const postElement = document.createElement('div');
-            postElement.className = 'post';
-            postElement.innerHTML = `
-                <h2>${post.title}</h2>
-                <p><strong>작성자:</strong> ${post.author}</p>
-                <p>${post.content}</p>
-                ${post.image_url ? `<img src="${post.image_url}" alt="Post image" style="max-width:100%;">` : ''}
-                <div class="like-button" onclick="likePost(event, ${post.id})">
-                    <img src="/image/like.png" alt="Like">
-                    <span class="like-count">${post.likes}</span>
-                </div>
-            `;
-            postElement.onclick = function() {
-                window.location.href = `post-details.html?id=${post.id}`;
-            };
-            return postElement;
-        }
-
-        function likePost(event, postId) {
-            event.stopPropagation();
-            fetch(`/api/posts/${postId}/like`, {
-                method: 'POST'
-            })
+    function setAuthorField() {
+        fetch('/isAuthenticated')
             .then(response => response.json())
             .then(data => {
-                console.log('Like Data:', data);
-                if (data.success) {
-                    const likeCountElement = event.currentTarget.querySelector('.like-count');
-                    likeCountElement.textContent = data.likes;
+                if (data.isAuthenticated) {
+                    document.getElementById('authorField').value = data.user.nickname;
+                    document.getElementById('authorField').readOnly = true;
                 } else {
-                    alert('Error liking post');
+                    document.getElementById('authorField').value = '로그인 해주세요';
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while liking the post.');
             });
-        }
+    }
 
-        function toggleTab(tab) {
-            var popularTab = document.getElementById('popular-tab');
-            var allTab = document.getElementById('all-tab');
-            var popularPosts = document.getElementById('popularPostsContainer');
-            var allPosts = document.getElementById('postsContainer');
+    function addPost(event) {
+        event.preventDefault();
+        const form = document.getElementById('postForm');
+        const formData = new FormData(form);
+        console.log('Form Data:', formData);
 
-            if (tab === 'popular') {
-                popularTab.classList.add('active');
-                allTab.classList.remove('active');
-                popularPosts.style.display = 'block';
-                allPosts.style.display = 'none';
+        fetch('/api/posts', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('Response:', response);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data:', data);
+            if (data.success) {
+                loadPopularPosts();
+                loadPosts();
+                form.reset();
+                document.getElementById('imagePreview').style.display = 'none';
             } else {
-                popularTab.classList.remove('active');
-                allTab.classList.add('active');
-                popularPosts.style.display = 'none';
-                allPosts.style.display = 'block';
+                alert('Error posting');
             }
-        }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while posting.');
+        });
+    }
 
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = function() {
-                const output = document.getElementById('imagePreview');
-                output.src = reader.result;
-                output.style.display = 'block';
-            }
-            reader.readAsDataURL(event.target.files[0]);
+    function loadPopularPosts() {
+        fetch('/api/popular-posts')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Popular Posts:', data);
+                const popularPostsContainer = document.getElementById('popularPostsContainer');
+                popularPostsContainer.innerHTML = '';
+                data.forEach(post => {
+                    const postElement = createPostElement(post);
+                    popularPostsContainer.appendChild(postElement);
+                });
+            });
+    }
+
+    function loadPosts() {
+        fetch('/api/posts')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Posts:', data);
+                const postsContainer = document.getElementById('postsContainer');
+                postsContainer.innerHTML = '';
+                data.forEach(post => {
+                    const postElement = createPostElement(post);
+                    postsContainer.appendChild(postElement);
+                });
+            });
+    }
+
+    function createPostElement(post) {
+        const postElement = document.createElement('div');
+        postElement.className = 'post';
+        postElement.innerHTML = `
+            <h2>${post.title}</h2>
+            <p><strong>작성자:</strong> ${post.author}</p>
+            <p>${post.content}</p>
+            ${post.image_url ? `<img src="${post.image_url}" alt="Post image" style="max-width:100%;">` : ''}
+            <div class="like-button" onclick="likePost(event, ${post.id})">
+                <img src="/image/like.png" alt="Like">
+                <span class="like-count">${post.likes}</span>
+            </div>
+        `;
+        postElement.onclick = function() {
+            window.location.href = `post-details.html?id=${post.id}`;
+        };
+        return postElement;
+    }
+
+    function toggleTab(tab) {
+        var popularTab = document.getElementById('popular-tab');
+        var allTab = document.getElementById('all-tab');
+        var popularPosts = document.getElementById('popularPostsContainer');
+        var allPosts = document.getElementById('postsContainer');
+
+        if (tab === 'popular') {
+            popularTab.classList.add('active');
+            allTab.classList.remove('active');
+            popularPosts.style.display = 'block';
+            allPosts.style.display = 'none';
+        } else {
+            popularTab.classList.remove('active');
+            allTab.classList.add('active');
+            popularPosts.style.display = 'none';
+            allPosts.style.display = 'block';
         }
-    </script>
+    }
+
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const output = document.getElementById('imagePreview');
+            output.src = reader.result;
+            output.style.display = 'block';
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
 </head>
 <body>
     <header>
