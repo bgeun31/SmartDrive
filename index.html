@@ -23,6 +23,19 @@
             }
         }
 
+        function checkAuthentication(event, url) {
+            event.preventDefault();
+            fetch('/isAuthenticated')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.isAuthenticated) {
+                        alert('로그인 해주세요');
+                    } else {
+                        window.location.href = url;
+                    }
+                });
+        }
+
         // Check if the user is authenticated
         window.addEventListener('DOMContentLoaded', function () {
             fetch('/isAuthenticated')
@@ -54,13 +67,11 @@
         </div>
         <img src="image/more.png" alt="More" class="more-icon" onclick="toggleDropdownMenu()">
         <div id="dropdownMenu" class="dropdown-menu">
-            <a href="favorite.html">즐겨찾기</a>
-            <a href="#">프로필</a>
-            <a href="#">설정</a>
+            <a href="#" onclick="checkAuthentication(event, 'favorite.html')">즐겨찾기</a>
             <a href="/auth/naver" id="login-link">로그인</a>
             <a href="/logout" id="logout-link" style="display: none;">로그아웃</a>
-            <a href="community.html">커뮤니티</a>
-            <a href="drive-companion.html">드라이브 동행</a>
+            <a href="#" onclick="checkAuthentication(event, 'community.html')">커뮤니티</a>
+            <a href="#" onclick="checkAuthentication(event, 'drive-companion.html')">드라이브 동행</a>
         </div>
     </header>
     <div class="container">
@@ -87,7 +98,7 @@
 
         <div class="drive-companion">
             <div class="title">
-                <a href="drive-companion.html" style="text-decoration: none; color: #333;">드라이브 동행</a>
+                <a href="#" onclick="checkAuthentication(event, 'drive-companion.html')" style="text-decoration: none; color: #333;">드라이브 동행</a>
             </div>
             <div class="companion-post">
                 <h3>남성 30대</h3>
@@ -105,7 +116,7 @@
     </div>
     <footer>
         &copy; 2024 Smart Drive. All rights reserved.
-        <a href="favorite.html" class="nav-link">즐겨찾기</a>
+        <a href="#" class="nav-link" onclick="checkAuthentication(event, 'favorite.html')">즐겨찾기</a>
     </footer>
 </body>
 <style>
