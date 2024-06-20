@@ -60,6 +60,28 @@ CREATE TABLE IF NOT EXISTS comments (
     FOREIGN KEY (post_id) REFERENCES posts(id)
 );
 ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+CREATE TABLE `drive_posts` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nickname` VARCHAR(50) NOT NULL,
+  `gender` VARCHAR(10) NOT NULL,
+  `age` INT NOT NULL,
+  `description` TEXT,
+  PRIMARY KEY (`id`)
+);
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+ALTER TABLE `posts`
+ADD COLUMN `likes` INT DEFAULT 0;
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+CREATE TABLE `drive_post_comments` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `post_id` INT NOT NULL,
+  `author` VARCHAR(50) NOT NULL,
+  `comment` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`post_id`) REFERENCES `drive_posts`(`id`) ON DELETE CASCADE
+);
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
 6. 서버 실행
 - Visual Studio Code에서 터미널(Terminal)을 열어서
